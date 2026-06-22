@@ -23,8 +23,8 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/vibeguard/vibeguard"
-Repository = "https://github.com/vibeguard/vibeguard"
+Homepage = "https://github.com/nohseongmin/VibeGuard"
+Repository = "https://github.com/nohseongmin/VibeGuard"
 
 [project.scripts]
 vibeguard = "vibeguard.cli:main"
