@@ -22,6 +22,17 @@ from .scanner import Scanner, ScanResult
 from .slopsquat import check_project
 
 
+def _ensure_utf8_output() -> None:
+    """비 UTF-8 콘솔(예: Windows cp949)에서도 한글 출력이 깨지지 않도록 고정한다."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8")
+            except (ValueError, OSError):
+                pass
+
+
 def _run_scan(args) -> int:
     scanner = Scanner()
     result: ScanResult = scanner.scan(args.path)
@@ -118,6 +129,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
+    _ensure_utf8_output()
     argv = sys.argv[1:] if argv is None else argv
     parser = build_parser()
     args = parser.parse_args(argv)
