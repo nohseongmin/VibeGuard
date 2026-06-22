@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vibeguard"
+version = "0.1.0"
+description = "바이브코딩을 위한 보안 가드레일 - AI 생성 코드의 취약점을 잡아내는 오픈소스 정적 분석 도구"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "VibeGuard Contributors" }]
+keywords = ["security", "static-analysis", "vibe-coding", "ai-generated-code", "slopsquatting", "sast"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
+# 런타임 의존성 없음(표준 라이브러리만 사용) - 보안 도구 자체의 공급망 위험을 0 으로.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/vibeguard/vibeguard"
+Repository = "https://github.com/vibeguard/vibeguard"
+
+[project.scripts]
+vibeguard = "vibeguard.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+include = ["vibeguard*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

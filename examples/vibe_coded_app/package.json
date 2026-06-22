@@ -1,0 +1,10 @@
+{
+  "name": "vibe-coded-demo",
+  "version": "1.0.0",
+  "description": "VibeGuard 데모용 의도적 취약 앱(JS). 일부 의존성은 환각/오타다.",
+  "dependencies": {
+    "express": "^4.18.0",
+    "expres": "^1.0.0",
+    "react-hook-form-validator-pro": "^2.1.0"
+  }
+}
