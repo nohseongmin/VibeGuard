@@ -7,6 +7,7 @@
   vibeguard scan . --fail-on high  high 이상 발견 시 종료코드 1 (CI/훅용)
   vibeguard rules                  탑재된 규칙 목록
   vibeguard init-hooks             git pre-commit 훅 설치
+  vibeguard gui                    브라우저 기반 GUI 실행(로컬 서버)
 """
 
 from __future__ import annotations
@@ -98,6 +99,12 @@ def _run_init_hooks(args) -> int:
     return 0 if ok else 1
 
 
+def _run_gui(args) -> int:
+    from .server import serve
+
+    return serve(host=args.host, port=args.port, open_browser=not args.no_browser)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="vibeguard",
@@ -124,6 +131,12 @@ def build_parser() -> argparse.ArgumentParser:
     hp = sub.add_parser("init-hooks", help="git pre-commit 훅 설치")
     hp.add_argument("path", nargs="?", default=".", help="git 저장소 경로(기본: 현재 폴더)")
     hp.set_defaults(func=_run_init_hooks)
+
+    gp = sub.add_parser("gui", help="브라우저 기반 GUI 실행(로컬 서버)")
+    gp.add_argument("--port", type=int, default=8000, help="포트(기본: 8000)")
+    gp.add_argument("--host", default="127.0.0.1", help="바인딩 호스트(기본: 127.0.0.1)")
+    gp.add_argument("--no-browser", action="store_true", help="브라우저 자동 실행 안 함")
+    gp.set_defaults(func=_run_gui)
 
     return p
 
