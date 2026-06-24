@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import os
 import sys
@@ -247,6 +248,129 @@ class SarifReporter:
         return json.dumps(sarif, ensure_ascii=False, indent=2)
 
 
+_SEV_COLOR = {
+    Severity.CRITICAL: "#e5484d",
+    Severity.HIGH: "#f76808",
+    Severity.MEDIUM: "#ffb224",
+    Severity.LOW: "#4593e6",
+    Severity.INFO: "#8b949e",
+}
+
+
+def _grade_color(grade: str) -> str:
+    if grade in ("A", "B"):
+        return "#3fb950"
+    if grade in ("C", "D"):
+        return "#ffb224"
+    return "#e5484d"
+
+
+_HTML_CSS = """
+*{box-sizing:border-box}body{margin:0;background:#0b0f15;color:#e6edf3;line-height:1.55;
+font-family:'Malgun Gothic',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:24px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.logo{width:40px;height:40px;border-radius:11px;background:#15351f;color:#3fb950;
+display:flex;align-items:center;justify-content:center;font-size:22px}
+h1{font-size:21px;margin:0}.sub{color:#94a3b2;font-size:13px;margin-top:2px}
+.summary{display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:#141b24;
+border:1px solid #27313d;border-radius:16px;padding:18px;margin-bottom:18px}
+.ring{width:96px;height:96px;border-radius:50%;border:8px solid #888;display:flex;
+flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto}
+.score{font-size:26px;font-weight:700;line-height:1}.of{font-size:11px;color:#94a3b2}
+.grade{display:inline-block;font-weight:700;font-size:14px;padding:2px 12px;border-radius:999px;color:#0b0f15}
+.verdict{margin-top:8px;font-size:15px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:#1b2531;border:1px solid #27313d;
+border-radius:999px;padding:6px 13px;font-size:13px}
+.dot{width:9px;height:9px;border-radius:50%}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:#141b24;border:1px solid #27313d;border-left:4px solid #888;border-radius:8px;padding:14px 16px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:6px;color:#0b0f15}
+.ttl{font-weight:700;font-size:15px}
+.rid{font-family:Consolas,monospace;font-size:11.5px;color:#94a3b2;background:#1b2531;
+border:1px solid #27313d;padding:2px 7px;border-radius:6px}
+.slop{font-size:11px;font-weight:700;color:#2a1a4a;background:#c8a2ff;padding:2px 8px;border-radius:6px}
+.loc{color:#94a3b2;font-size:12.5px;font-family:Consolas,monospace;margin:8px 0 0}
+pre.snip{margin:8px 0;background:#0d141d;border:1px solid #27313d;border-radius:8px;padding:9px 12px;
+overflow:auto;font-family:Consolas,monospace;font-size:12.5px;color:#d6dee7;white-space:pre-wrap;word-break:break-all}
+.row{margin-top:7px;font-size:13.5px}.row .k{color:#94a3b2;margin-right:6px}
+.row a{color:#6cb6ff}.empty{text-align:center;padding:50px;color:#94a3b2}
+footer{margin-top:22px;color:#94a3b2;font-size:12px}
+"""
+
+
+class HtmlReporter:
+    """단독 HTML 리포트. 브라우저로 열거나 PR/이슈에 첨부할 수 있다(외부 의존성 없음)."""
+
+    def render(self, result: ScanResult) -> str:
+        findings = result.sorted_findings()
+        sc, gr, vd = _score.summary(findings)
+        counts = result.by_severity()
+        esc = html.escape
+        gc = _grade_color(gr)
+        p: List[str] = []
+        p.append("<!DOCTYPE html>")
+        p.append('<html lang="ko"><head><meta charset="utf-8">')
+        p.append('<meta name="viewport" content="width=device-width, initial-scale=1">')
+        p.append("<title>VibeGuard 보안 리포트</title>")
+        p.append("<style>" + _HTML_CSS + "</style></head><body><div class=\"wrap\">")
+        p.append(
+            '<header><div class="logo">\U0001f6e1️</div><div>'
+            "<h1>VibeGuard 보안 리포트</h1>"
+            f'<div class="sub">스캔한 파일 {result.files_scanned}개 · 발견 {len(findings)}건</div>'
+            "</div></header>"
+        )
+        p.append('<section class="summary">')
+        p.append(f'<div class="ring" style="border-color:{gc}"><div class="score">{sc}</div><div class="of">/100</div></div>')
+        p.append('<div class="sumtext">')
+        p.append(f'<span class="grade" style="background:{gc}">등급 {esc(gr)}</span>')
+        p.append(f'<div class="verdict">{esc(vd)}</div>')
+        p.append('<div class="chips">')
+        for s in (Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO):
+            p.append(
+                f'<span class="chip"><span class="dot" style="background:{_SEV_COLOR[s]}"></span>'
+                f'{esc(s.label)} <b>{counts[s]}</b></span>'
+            )
+        p.append("</div></div></section>")
+        if not findings:
+            p.append('<div class="empty">발견된 문제가 없습니다. 안전합니다!</div>')
+        else:
+            p.append('<section class="cards">')
+            for f in findings:
+                col = _SEV_COLOR[f.severity]
+                slop = ""
+                if "SLOP" in f.rule_id or f.category == "supply-chain":
+                    slop = ' <span class="slop">공급망/슬롭스쿼팅</span>'
+                col_str = f":{f.column}" if f.column else ""
+                cwe_html = ""
+                if f.cwe:
+                    num = "".join(ch for ch in f.cwe if ch.isdigit())
+                    cwe_html = (
+                        f'<div class="row"><span class="k">참고</span>'
+                        f'<a href="https://cwe.mitre.org/data/definitions/{num}.html" '
+                        f'target="_blank" rel="noopener">{esc(f.cwe)}</a></div>'
+                    )
+                p.append(
+                    f'<div class="card" style="border-left-color:{col}">'
+                    f'<div class="top"><span class="badge" style="background:{col}">{esc(f.severity.label)}</span>'
+                    f'<span class="ttl">{esc(f.title)}</span><span class="rid">{esc(f.rule_id)}</span>{slop}</div>'
+                    f'<div class="loc">{esc(f.file)}:{f.line}{col_str}</div>'
+                    f'<pre class="snip">{esc(f.snippet)}</pre>'
+                    f'<div class="row"><span class="k">설명</span>{esc(f.explanation)}</div>'
+                    f'<div class="row"><span class="k">해결</span>{esc(f.fix)}</div>'
+                    f"{cwe_html}</div>"
+                )
+            p.append("</section>")
+        p.append(
+            '<footer>VibeGuard · 런타임 외부 의존성 0 (Python 표준 라이브러리만 사용) · '
+            "github.com/nohseongmin/VibeGuard</footer>"
+        )
+        p.append("</div></body></html>")
+        return "\n".join(p)
+
+
 def get_reporter(fmt: str):
     fmt = (fmt or "terminal").lower()
     if fmt == "json":
@@ -255,4 +379,6 @@ def get_reporter(fmt: str):
         return MarkdownReporter()
     if fmt == "sarif":
         return SarifReporter()
+    if fmt == "html":
+        return HtmlReporter()
     return TerminalReporter()

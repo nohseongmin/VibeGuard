@@ -21,6 +21,7 @@ from .finding import Finding, Severity
 from .reporter import get_reporter
 from .scanner import Scanner, ScanResult
 from .slopsquat import check_project
+from .config import load_config
 
 
 def _ensure_utf8_output() -> None:
@@ -45,6 +46,19 @@ def _run_scan(args) -> int:
         )
         result.findings.extend(dep_findings)
 
+    # 설정 파일(.vibeguard.json): 규칙 비활성화 / 경로 제외 (CLI 플래그가 우선)
+    cfg = load_config(args.path)
+    disabled = set(cfg.get("disable", []))
+    if disabled:
+        result.findings = [f for f in result.findings if f.rule_id not in disabled]
+    excludes = cfg.get("exclude", [])
+    if excludes:
+        result.findings = [
+            f
+            for f in result.findings
+            if not any(x in f.file.replace("\\", "/") for x in excludes)
+        ]
+
     # 베이스라인 기록 모드: 현재 발견을 저장하고 종료
     if getattr(args, "write_baseline", None):
         from .baseline import write_baseline
@@ -60,9 +74,10 @@ def _run_scan(args) -> int:
         known = load_fingerprints(args.baseline)
         result.findings = filter_new(result.findings, known)
 
-    # 최소 심각도 필터
-    if args.min_severity:
-        floor = Severity.from_name(args.min_severity)
+    # 최소 심각도 필터 (CLI > 설정 파일)
+    min_sev = args.min_severity or cfg.get("min_severity")
+    if min_sev:
+        floor = Severity.from_name(min_sev)
         result.findings = [f for f in result.findings if f.severity >= floor]
 
     reporter = get_reporter(args.format)
@@ -79,9 +94,10 @@ def _run_scan(args) -> int:
     else:
         print(output)
 
-    # 종료 코드 결정
-    if args.fail_on:
-        threshold = Severity.from_name(args.fail_on)
+    # 종료 코드 결정 (CLI > 설정 파일)
+    fail_on = args.fail_on or cfg.get("fail_on")
+    if fail_on:
+        threshold = Severity.from_name(fail_on)
         if any(f.severity >= threshold for f in result.findings):
             return 1
     return 0
@@ -130,7 +146,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("scan", help="파일/폴더를 스캔")
     sp.add_argument("path", nargs="?", default=".", help="스캔할 경로(기본: 현재 폴더)")
-    sp.add_argument("--format", "-f", default="terminal", choices=["terminal", "json", "md", "markdown", "sarif"])
+    sp.add_argument("--format", "-f", default="terminal", choices=["terminal", "json", "md", "markdown", "sarif", "html"])
     sp.add_argument("--output", "-o", help="결과를 파일로 저장")
     sp.add_argument("--no-color", action="store_true", help="색상 출력 끄기")
     sp.add_argument("--no-deps", action="store_true", help="의존성(슬롭스쿼팅) 검사 생략")

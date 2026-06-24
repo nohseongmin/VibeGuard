@@ -136,3 +136,29 @@ make_regex_rule(
     secret_group=1,
     skip_placeholders=True,
 )
+
+# SendGrid API 키
+make_regex_rule(
+    "VG-SECRET-011",
+    "SendGrid API 키가 하드코딩됨",
+    Severity.CRITICAL,
+    "secrets",
+    r"\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\b",
+    "SendGrid 형식의 비밀 API 키가 코드에 직접 들어 있습니다.",
+    _SECRET_FIX,
+    cwe="CWE-798",
+    skip_placeholders=True,
+)
+
+# Twilio API 키 SID
+make_regex_rule(
+    "VG-SECRET-012",
+    "Twilio API 키 SID가 하드코딩됨",
+    Severity.HIGH,
+    "secrets",
+    r"\bSK[0-9a-fA-F]{32}\b",
+    "Twilio API 키 SID 형식의 비밀 값이 코드에 직접 들어 있습니다.",
+    _SECRET_FIX,
+    cwe="CWE-798",
+    skip_placeholders=True,
+)

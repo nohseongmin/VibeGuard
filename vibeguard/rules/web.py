@@ -131,3 +131,31 @@ make_regex_rule(
     cwe="CWE-295",
     extensions=PY,
 )
+
+
+# Django 디버그 모드 활성화 (settings.py)
+make_regex_rule(
+    "VG-WEB-010",
+    "Django 디버그 모드 활성화(DEBUG)",
+    Severity.MEDIUM,
+    "web",
+    r"^\s*DEBUG\s*=\s*True\b",
+    "디버그 모드가 켜져 있으면 오류 페이지로 소스·환경변수·설정이 외부에 노출될 수 있습니다.",
+    "운영 환경에서는 디버그 모드를 끄고, 환경변수로 개발/운영 설정을 분기하세요.",
+    cwe="CWE-489",
+    extensions=PY,
+)
+
+
+# 오픈 리다이렉트 (사용자 입력으로 리다이렉트)
+make_regex_rule(
+    "VG-WEB-011",
+    "사용자 입력으로 리다이렉트(오픈 리다이렉트)",
+    Severity.MEDIUM,
+    "web",
+    r"redirect\s*\(\s*request\.(?:args|form|values|GET|POST)\b",
+    "사용자 입력을 그대로 리다이렉트 대상에 쓰면 피싱 사이트로 유도하는 오픈 리다이렉트가 됩니다.",
+    "허용된 경로/도메인 목록(allowlist)으로 대상 URL 을 검증한 뒤 리다이렉트하세요.",
+    cwe="CWE-601",
+    extensions=PY,
+)
