@@ -69,3 +69,17 @@ make_regex_rule(
     cwe="CWE-943",
     extensions=JS,
 )
+
+
+# Flask 서버사이드 템플릿 인젝션 (render_template_string + 동적 입력)
+make_regex_rule(
+    "VG-SSTI-001",
+    "사용자 입력으로 서버 템플릿 렌더링(SSTI)",
+    Severity.HIGH,
+    "injection",
+    r"render_template_string\s*\(\s*(?:f[\"']|[^)]*\+)",
+    "동적 문자열을 서버 템플릿으로 렌더링하면 SSTI 로 원격 코드 실행까지 이어질 수 있습니다.",
+    "정적 템플릿 파일을 쓰고 값은 변수로 전달하세요. 사용자 입력을 템플릿 문자열 자체에 넣지 마세요.",
+    cwe="CWE-94",
+    extensions=PY,
+)

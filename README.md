@@ -100,10 +100,10 @@ vibeguard gui --port 8080
 | 분류 | 대표 규칙 | 예시 |
 | --- | --- | --- |
 | 시크릿(secrets) | VG-SECRET-001~010 | OpenAI/Anthropic/AWS/GitHub/Stripe 키, 개인키, 평문 비밀번호, DB URL 내 비밀번호 |
-| 위험한 실행(dangerous) | VG-EXEC-001~007 | eval/exec, shell=True, os.system 포매팅, pickle, yaml.load, new Function, child_process |
-| 인젝션(injection) | VG-SQLI-001~004 | f-string/템플릿/문자열결합 SQL, MongoDB $where |
-| 웹 설정(web) | VG-WEB-001~008 | debug=True, 전체 허용 CORS, TLS 검증 비활성화, innerHTML/dangerouslySetInnerHTML |
-| 약한 암호화(crypto) | VG-CRYPTO-001~005 | MD5/SHA1, random 토큰, Math.random, DES/ECB |
+| 위험한 실행(dangerous) | VG-EXEC-001~008 | eval/exec, shell=True, os.system 포매팅, pickle, yaml.load, new Function, child_process, 압축 해제 zip-slip |
+| 인젝션(injection) | VG-SQLI-001~004, VG-SSTI-001 | f-string/템플릿/문자열결합 SQL, MongoDB $where, Flask 템플릿 인젝션(SSTI) |
+| 웹 설정(web) | VG-WEB-001~009 | debug=True, 전체 허용 CORS, TLS/SSL 검증 비활성화, innerHTML/dangerouslySetInnerHTML |
+| 약한 암호화(crypto) | VG-CRYPTO-001~006 | MD5/SHA1, random 토큰, Math.random, DES/ECB, JWT 서명검증 비활성화/none |
 | 공급망(supply-chain) | VG-SLOP-001~002 | 레지스트리에 없는 환각 패키지, 유명 패키지 오타스쿼팅 |
 
 지원 언어: Python, JavaScript/TypeScript(.js/.jsx/.ts/.tsx). 시크릿 규칙은 모든 텍스트 파일에 적용됩니다.

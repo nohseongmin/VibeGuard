@@ -72,3 +72,17 @@ make_regex_rule(
     cwe="CWE-327",
     extensions=PY,
 )
+
+
+# JWT 서명 검증 비활성화 / none 알고리즘 허용
+make_regex_rule(
+    "VG-CRYPTO-006",
+    "JWT 서명 검증이 비활성화됨",
+    Severity.HIGH,
+    "crypto",
+    r"verify_signature[\"']?\s*:\s*[Ff]alse|algorithms\s*=\s*\[[^\]]*[\"']none[\"']",
+    "서명 검증을 끄거나 none 알고리즘을 허용하면 누구나 토큰을 위조해 인증을 우회할 수 있습니다.",
+    "서명 검증을 켜고 허용 알고리즘을 RS256/HS256 등으로 명시하세요. none 알고리즘은 허용하지 마세요.",
+    cwe="CWE-347",
+    extensions=PY,
+)

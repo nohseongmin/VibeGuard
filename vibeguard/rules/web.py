@@ -117,3 +117,17 @@ make_regex_rule(
     cwe="CWE-79",
     extensions=JS,
 )
+
+
+# Python SSL/TLS 인증서 검증 비활성화
+make_regex_rule(
+    "VG-WEB-009",
+    "Python SSL/TLS 인증서 검증 비활성화",
+    Severity.HIGH,
+    "web",
+    r"ssl\._create_unverified_context|ssl\.CERT_NONE|check_hostname\s*=\s*False",
+    "SSL/TLS 인증서 검증을 끄면 중간자(MITM) 공격에 통신이 그대로 노출됩니다.",
+    "검증을 끄지 마세요. 사설 인증서는 ssl.create_default_context(cafile=...) 로 신뢰를 추가하세요.",
+    cwe="CWE-295",
+    extensions=PY,
+)

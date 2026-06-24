@@ -101,3 +101,17 @@ make_regex_rule(
     cwe="CWE-78",
     extensions=JS,
 )
+
+
+# 압축 파일을 검증 없이 전체 해제 (zip slip / 경로 조작)
+make_regex_rule(
+    "VG-EXEC-008",
+    "압축 파일을 검증 없이 전체 해제(zip/tar)",
+    Severity.MEDIUM,
+    "path",
+    r"\.extractall\s*\(",
+    "항목 경로를 검증하지 않고 압축을 풀면, 악성 아카이브가 상위 경로(../)로 파일을 덮어쓸 수 있습니다(zip slip).",
+    "각 항목이 대상 폴더를 벗어나지 않는지 확인 후 해제하세요. Python 3.12+ 는 filter='data' 옵션을 사용하세요.",
+    cwe="CWE-22",
+    extensions=PY,
+)
