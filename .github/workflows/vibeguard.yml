@@ -1,0 +1,39 @@
+name: VibeGuard security scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write   # SARIF 업로드(코드 스캐닝)에 필요
+
+jobs:
+  vibeguard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install VibeGuard
+        run: pip install -e .
+
+      # 저장소 전체를 스캔해 SARIF 리포트를 생성(차단하지 않음, 정보 제공용)
+      - name: Scan repository (SARIF)
+        run: vibeguard scan . --format sarif --output vibeguard.sarif --offline
+
+      # GitHub Security 탭(코드 스캐닝)에 결과 업로드
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: vibeguard.sarif
+
+      # 제품 코드(vibeguard/)에서 medium 이상 발견 시 빌드 실패.
+      # 본인 프로젝트에 적용할 때는 경로를 '.' 로 바꾸고 임계값을 조정하세요.
+      - name: Fail on findings in package code
+        run: vibeguard scan vibeguard --fail-on medium --offline

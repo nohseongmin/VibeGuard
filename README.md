@@ -48,6 +48,7 @@ vibeguard scan . --format json    JSON 출력(CI/에디터 연동)
 vibeguard scan . --format md -o report.md   Markdown 리포트 저장
 vibeguard scan . --offline        레지스트리 조회 없이(오프라인) 스캔
 vibeguard scan . --fail-on high   high 이상 발견 시 종료코드 1 (CI/훅용)
+vibeguard scan . --format sarif -o out.sarif   SARIF 출력(GitHub 코드 스캐닝/VS Code)
 vibeguard rules                   탑재된 규칙 목록 보기
 vibeguard init-hooks              git pre-commit 훅 설치
 vibeguard gui                     브라우저 기반 GUI 실행(로컬 서버)
@@ -63,6 +64,12 @@ vibeguard gui --port 8080
 ```
 
 경로를 입력하고 스캔하면 보안 점수 링, 심각도별 칩 필터, 취약점 카드(위치·코드·설명·해결책·CWE), 슬롭스쿼팅 강조 태그를 한눈에 볼 수 있습니다. 로컬호스트(127.0.0.1)에만 바인딩하며 외부 의존성은 없습니다.
+
+## CI 연동 (GitHub Actions)
+
+`vibeguard scan . --format sarif` 로 SARIF 2.1.0 리포트를 만들면 GitHub 코드 스캐닝(Security 탭)이나 VS Code SARIF Viewer에서 결과를 확인할 수 있습니다. 저장소의 [.github/workflows/vibeguard.yml](.github/workflows/vibeguard.yml) 이 예시 워크플로입니다 — 푸시/PR마다 스캔해 SARIF를 업로드하고, 제품 코드에서 medium 이상이 나오면 빌드를 실패시킵니다.
+
+참고: VibeGuard는 자기 자신의 코드(`vibeguard/`)를 스캔해도 발견 0건입니다(규칙 정의 라인은 `# vibeguard: ignore` 로 표시).
 
 ## 예시 출력
 

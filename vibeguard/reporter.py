@@ -150,10 +150,109 @@ class MarkdownReporter:
         return "\n".join(lines)
 
 
+# 심각도 -> SARIF level / GitHub code scanning security-severity
+_SARIF_LEVEL = {
+    Severity.CRITICAL: "error",
+    Severity.HIGH: "error",
+    Severity.MEDIUM: "warning",
+    Severity.LOW: "note",
+    Severity.INFO: "note",
+}
+_SECURITY_SEVERITY = {
+    Severity.CRITICAL: "9.0",
+    Severity.HIGH: "7.5",
+    Severity.MEDIUM: "5.0",
+    Severity.LOW: "3.0",
+    Severity.INFO: "1.0",
+}
+
+
+def _sarif_uri(path: str) -> str:
+    """파일 경로를 SARIF 용 상대 URI(슬래시)로 정규화."""
+    p = path.replace("\\", "/")
+    while p.startswith("./"):
+        p = p[2:]
+    return p
+
+
+class SarifReporter:
+    """SARIF 2.1.0 출력. GitHub code scanning, VS Code SARIF Viewer 등과 연동된다."""
+
+    SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
+
+    def render(self, result: ScanResult) -> str:
+        from . import __version__
+
+        findings = result.sorted_findings()
+        rules: dict = {}
+        for f in findings:
+            if f.rule_id in rules:
+                continue
+            rule = {
+                "id": f.rule_id,
+                "name": f.rule_id,
+                "shortDescription": {"text": f.title},
+                "properties": {
+                    "category": f.category,
+                    "security-severity": _SECURITY_SEVERITY[f.severity],
+                    "tags": ["security"],
+                },
+            }
+            if f.cwe:
+                num = "".join(ch for ch in f.cwe if ch.isdigit())
+                if num:
+                    rule["helpUri"] = f"https://cwe.mitre.org/data/definitions/{num}.html"
+                    rule["properties"]["tags"].append(f"external/cwe/cwe-{num}")
+            rules[f.rule_id] = rule
+
+        results = []
+        for f in findings:
+            results.append(
+                {
+                    "ruleId": f.rule_id,
+                    "level": _SARIF_LEVEL[f.severity],
+                    "message": {"text": f"{f.title} — {f.explanation} (해결: {f.fix})"},
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {"uri": _sarif_uri(f.file)},
+                                "region": {
+                                    "startLine": max(1, f.line),
+                                    "startColumn": max(1, f.column or 1),
+                                },
+                            }
+                        }
+                    ],
+                    "properties": {"severity": f.severity.name, "cwe": f.cwe or ""},
+                }
+            )
+
+        sarif = {
+            "$schema": self.SCHEMA,
+            "version": "2.1.0",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {
+                            "name": "VibeGuard",
+                            "informationUri": "https://github.com/nohseongmin/VibeGuard",
+                            "version": __version__,
+                            "rules": list(rules.values()),
+                        }
+                    },
+                    "results": results,
+                }
+            ],
+        }
+        return json.dumps(sarif, ensure_ascii=False, indent=2)
+
+
 def get_reporter(fmt: str):
     fmt = (fmt or "terminal").lower()
     if fmt == "json":
         return JsonReporter()
     if fmt in ("md", "markdown"):
         return MarkdownReporter()
+    if fmt == "sarif":
+        return SarifReporter()
     return TerminalReporter()

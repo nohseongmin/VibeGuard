@@ -115,7 +115,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("scan", help="파일/폴더를 스캔")
     sp.add_argument("path", nargs="?", default=".", help="스캔할 경로(기본: 현재 폴더)")
-    sp.add_argument("--format", "-f", default="terminal", choices=["terminal", "json", "md", "markdown"])
+    sp.add_argument("--format", "-f", default="terminal", choices=["terminal", "json", "md", "markdown", "sarif"])
     sp.add_argument("--output", "-o", help="결과를 파일로 저장")
     sp.add_argument("--no-color", action="store_true", help="색상 출력 끄기")
     sp.add_argument("--no-deps", action="store_true", help="의존성(슬롭스쿼팅) 검사 생략")

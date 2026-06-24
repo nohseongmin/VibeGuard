@@ -66,7 +66,7 @@ make_regex_rule(
     "취약한 암호 알고리즘/모드(DES, ECB) 사용",
     Severity.MEDIUM,
     "crypto",
-    r"\b(?:DES\.new|MODE_ECB|algorithms\.(?:DES|Blowfish|ARC4))\b",
+    r"\b(?:DES\.new|MODE_ECB|algorithms\.(?:DES|Blowfish|ARC4))\b",  # vibeguard: ignore
     "DES/ECB/RC4 등은 현대 기준으로 안전하지 않은 암호 방식입니다.",
     "AES-GCM 같은 인증 암호(AEAD)와 안전한 모드를 사용하세요.",
     cwe="CWE-327",
