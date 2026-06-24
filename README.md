@@ -49,6 +49,8 @@ vibeguard scan . --format md -o report.md   Markdown 리포트 저장
 vibeguard scan . --offline        레지스트리 조회 없이(오프라인) 스캔
 vibeguard scan . --fail-on high   high 이상 발견 시 종료코드 1 (CI/훅용)
 vibeguard scan . --format sarif -o out.sarif   SARIF 출력(GitHub 코드 스캐닝/VS Code)
+vibeguard scan . --write-baseline .vibeguard.json   현재 발견을 베이스라인으로 저장(기존 코드 수용)
+vibeguard scan . --baseline .vibeguard.json   기존 발견은 숨기고 새로 생긴 문제만 보고
 vibeguard rules                   탑재된 규칙 목록 보기
 vibeguard init-hooks              git pre-commit 훅 설치
 vibeguard gui                     브라우저 기반 GUI 실행(로컬 서버)

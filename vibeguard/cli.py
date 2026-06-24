@@ -45,6 +45,21 @@ def _run_scan(args) -> int:
         )
         result.findings.extend(dep_findings)
 
+    # 베이스라인 기록 모드: 현재 발견을 저장하고 종료
+    if getattr(args, "write_baseline", None):
+        from .baseline import write_baseline
+
+        n = write_baseline(args.write_baseline, result.findings)
+        print(f"베이스라인을 저장했습니다: {args.write_baseline} ({n}건)")
+        return 0
+
+    # 베이스라인 비교: 기존(수용된) 발견은 숨기고 새로 생긴 것만 남김
+    if getattr(args, "baseline", None):
+        from .baseline import filter_new, load_fingerprints
+
+        known = load_fingerprints(args.baseline)
+        result.findings = filter_new(result.findings, known)
+
     # 최소 심각도 필터
     if args.min_severity:
         floor = Severity.from_name(args.min_severity)
@@ -123,6 +138,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--timeout", type=float, default=4.0, help="레지스트리 조회 타임아웃(초)")
     sp.add_argument("--min-severity", choices=["info", "low", "medium", "high", "critical"], help="이 심각도 미만은 숨김")
     sp.add_argument("--fail-on", choices=["info", "low", "medium", "high", "critical"], help="이 심각도 이상 발견 시 종료코드 1")
+    sp.add_argument("--baseline", metavar="FILE", help="베이스라인에 있는 발견은 숨기고 새로 생긴 것만 보고")
+    sp.add_argument("--write-baseline", metavar="FILE", help="현재 발견을 베이스라인으로 저장하고 종료(기존 코드 수용용)")
     sp.set_defaults(func=_run_scan)
 
     rp = sub.add_parser("rules", help="탑재된 규칙 목록 보기")

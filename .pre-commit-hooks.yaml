@@ -1,0 +1,15 @@
+# pre-commit 프레임워크(https://pre-commit.com) 연동용 정의.
+# 사용자는 자신의 .pre-commit-config.yaml 에서 아래처럼 참조한다:
+#
+#   - repo: https://github.com/nohseongmin/VibeGuard
+#     rev: main
+#     hooks:
+#       - id: vibeguard
+#
+- id: vibeguard
+  name: VibeGuard 보안 스캔
+  description: AI 생성 코드의 취약점과 슬롭스쿼팅을 커밋 전에 검사
+  entry: vibeguard scan
+  language: python
+  pass_filenames: false
+  args: ["--fail-on", "high", "--offline"]

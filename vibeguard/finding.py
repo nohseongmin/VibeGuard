@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+import hashlib
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 
@@ -80,6 +81,12 @@ class Finding:
 
     def location(self) -> str:
         return f"{self.file}:{self.line}"
+
+    def fingerprint(self) -> str:
+        """라인 번호와 무관한 안정적 지문(베이스라인 비교용)."""
+        norm_file = self.file.replace("\\", "/")
+        raw = f"{self.rule_id}|{norm_file}|{self.snippet.strip()}"
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
     def __lt__(self, other: "Finding") -> bool:
         # 심각도 내림차순 -> 파일 -> 라인 순으로 정렬되도록
