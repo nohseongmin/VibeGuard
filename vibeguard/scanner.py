@@ -34,6 +34,13 @@ _IGNORE_MARK = "vibeguard: ignore"
 MAX_FILE_BYTES = 2_000_000  # 2MB 초과 파일은 건너뜀(미니파이/번들 가능성)
 MAX_LINE_LEN = 4000  # 비정상적으로 긴 라인(미니파이)은 건너뜀
 
+# AST 문자열-리터럴 필터를 적용할 '코드성' 분류 (시크릿/공급망은 문자열이 대상이라 제외)
+_CODE_CATEGORIES = frozenset({"dangerous", "injection", "web", "crypto", "path"})
+
+# 코드성 분류이지만 '문자열 안의 값'을 정당하게 탐지하는 규칙(예: 0.0.0.0 IP,
+# JWT 의 verify_signature/none)은 문자열 필터에서 제외한다.
+_STRING_OK_RULES = frozenset({"VG-WEB-006", "VG-CRYPTO-006"})
+
 
 @dataclass
 class ScanResult:
@@ -106,6 +113,22 @@ class Scanner:
                 continue
             for rule in applicable:
                 findings.extend(rule.scan_line(line, lineno, path))
+
+        # AST 정밀도: .py 파일에서 문자열 리터럴 안의 코드성 매치(가짜 양성)를 제거
+        if findings and path.lower().endswith(".py"):
+            from .astscan import in_string_span, string_literal_spans
+
+            spans = string_literal_spans(text)
+            if spans:
+                findings = [
+                    f
+                    for f in findings
+                    if not (
+                        f.category in _CODE_CATEGORIES
+                        and f.rule_id not in _STRING_OK_RULES
+                        and in_string_span(spans, f.line, f.column - 1)
+                    )
+                ]
         return findings
 
     # ---- 전체 스캔 --------------------------------------------------------

@@ -18,7 +18,7 @@
 - 설정 파일(`.vibeguard.json`) — 규칙 비활성화·경로 제외·기본 심각도/실패 임계값
 - `--diff` 모드 — git 변경 파일만 스캔(PR/CI용)
 - git pre-commit 훅(`vibeguard init-hooks`)과 pre-commit 프레임워크 연동(`.pre-commit-hooks.yaml`)
-- 오탐 억제: `# vibeguard: ignore` 주석, placeholder 자동 제외, 산출물 디렉터리 제외
+- 오탐 억제: AST 기반 문자열-리터럴 필터(Python — 문자열·문서 안의 코드 패턴 제외), `# vibeguard: ignore` 주석, placeholder 자동 제외, 산출물 디렉터리 제외
 
 ### 특징
 - 런타임 외부 의존성 0 (Python 표준 라이브러리만 사용)

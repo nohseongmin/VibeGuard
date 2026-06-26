@@ -4,7 +4,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)
 ![runtime deps: 0](https://img.shields.io/badge/runtime%20deps-0-brightgreen.svg)
-![tests: 85 passing](https://img.shields.io/badge/tests-85%20passing-brightgreen.svg)
+![tests: 91 passing](https://img.shields.io/badge/tests-91%20passing-brightgreen.svg)
 
 바이브코딩(vibe coding)을 위한 보안 가드레일.
 
@@ -128,6 +128,7 @@ AI는 그럴듯하지만 존재하지 않는 패키지 이름을 만들어냅니
 
 ## 오탐 줄이기
 
+- Python 파일은 AST로 문자열 리터럴 위치를 분석해, 문자열·문서·예시 안의 코드 패턴(예: 설명 속 `eval(`, `md5(`)을 가짜 양성으로 잡지 않습니다. (시크릿·IP·JWT 설정처럼 문자열 자체가 대상인 규칙은 그대로 탐지)
 - 특정 줄을 무시하려면 줄 끝에 주석을 답니다: `eval(x)  # vibeguard: ignore`
 - `your-api-key`, `example`, `xxxx` 같은 placeholder 값은 시크릿 규칙에서 자동 제외됩니다.
 - `node_modules`, `.venv`, `dist` 등 산출물 디렉터리는 스캔에서 제외됩니다.

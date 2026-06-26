@@ -43,12 +43,12 @@ make_regex_rule(
 # TLS 인증서 검증 비활성화 (Python requests)
 make_regex_rule(
     "VG-WEB-003",
-    "TLS 인증서 검증을 비활성화(verify=False)",  # vibeguard: ignore
+    "TLS 인증서 검증을 비활성화(verify=False)",
     Severity.HIGH,
     "web",
     r"\bverify\s*=\s*False\b",
     "서버 인증서 검증을 끄면 중간자(MITM) 공격에 노출됩니다. 누구든 통신을 가로채 위조할 수 있습니다.",
-    "verify=False 를 제거하세요. 사설 CA 가 필요하면 verify='/path/to/ca.pem' 처럼 인증서를 지정하세요.",  # vibeguard: ignore
+    "verify=False 를 제거하세요. 사설 CA 가 필요하면 verify='/path/to/ca.pem' 처럼 인증서를 지정하세요.",
     cwe="CWE-295",
     extensions=PY,
 )

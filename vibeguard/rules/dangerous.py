@@ -17,7 +17,7 @@ JS = (".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs")
 # Python eval/exec
 make_regex_rule(
     "VG-EXEC-001",
-    "eval()/exec() 사용",  # vibeguard: ignore
+    "eval()/exec() 사용",
     Severity.HIGH,
     "dangerous",
     r"\b(?:eval|exec)\s*\(",
@@ -80,7 +80,7 @@ make_regex_rule(
 # JS eval / Function / child_process exec with template string
 make_regex_rule(
     "VG-EXEC-006",
-    "JavaScript eval()/new Function() 사용",  # vibeguard: ignore
+    "JavaScript eval()/new Function() 사용",
     Severity.HIGH,
     "dangerous",
     r"\b(?:eval\s*\(|new\s+Function\s*\()",
@@ -95,7 +95,7 @@ make_regex_rule(
     "child_process.exec 에 템플릿 문자열 사용",
     Severity.HIGH,
     "dangerous",
-    r"(?:child_process\.)?exec(?:Sync)?\s*\(\s*`[^`]*\$\{",  # vibeguard: ignore
+    r"(?:child_process\.)?exec(?:Sync)?\s*\(\s*`[^`]*\$\{",
     "셸 명령에 변수를 끼워 넣고 있습니다. 명령어 주입(command injection) 위험이 큽니다.",
     "execFile 또는 spawn 으로 인자를 배열 형태로 전달하고, 셸 보간을 사용하지 마세요.",
     cwe="CWE-78",
