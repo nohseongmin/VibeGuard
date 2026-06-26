@@ -37,10 +37,19 @@ def _ensure_utf8_output() -> None:
 
 def _run_scan(args) -> int:
     scanner = Scanner()
-    result: ScanResult = scanner.scan(args.path)
+    if getattr(args, "diff", None):
+        from .gitdiff import changed_files
 
-    # 슬롭스쿼팅/오타스쿼팅 검사(옵션)
-    if not args.no_deps:
+        base = None if args.diff == "HEAD" else args.diff
+        result = ScanResult()
+        for fp in changed_files(args.path, base):
+            result.findings.extend(scanner.scan_file(fp))
+            result.files_scanned += 1
+    else:
+        result = scanner.scan(args.path)
+
+    # 슬롭스쿼팅/오타스쿼팅 검사(옵션) — diff 모드에서는 변경 코드에 집중하므로 생략
+    if not args.no_deps and not getattr(args, "diff", None):
         dep_findings: List[Finding] = check_project(
             args.path, offline=args.offline, timeout=args.timeout
         )
@@ -156,6 +165,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--fail-on", choices=["info", "low", "medium", "high", "critical"], help="이 심각도 이상 발견 시 종료코드 1")
     sp.add_argument("--baseline", metavar="FILE", help="베이스라인에 있는 발견은 숨기고 새로 생긴 것만 보고")
     sp.add_argument("--write-baseline", metavar="FILE", help="현재 발견을 베이스라인으로 저장하고 종료(기존 코드 수용용)")
+    sp.add_argument("--diff", nargs="?", const="HEAD", default=None, metavar="BASE",
+                    help="git 변경 파일만 스캔(기본 HEAD 대비, BASE 지정 가능) — PR/CI용")
     sp.set_defaults(func=_run_scan)
 
     rp = sub.add_parser("rules", help="탑재된 규칙 목록 보기")

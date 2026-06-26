@@ -58,6 +58,7 @@ vibeguard scan . --format sarif -o out.sarif   SARIF 출력(GitHub 코드 스캐
 vibeguard scan . --format html -o report.html   단독 HTML 리포트(브라우저로 열기/첨부)
 vibeguard scan . --write-baseline .vibeguard.json   현재 발견을 베이스라인으로 저장(기존 코드 수용)
 vibeguard scan . --baseline .vibeguard.json   기존 발견은 숨기고 새로 생긴 문제만 보고
+vibeguard scan . --diff           git 변경 파일만 스캔(PR/CI에서 빠르게)
 vibeguard rules                   탑재된 규칙 목록 보기
 vibeguard init-hooks              git pre-commit 훅 설치
 vibeguard gui                     브라우저 기반 GUI 실행(로컬 서버)
