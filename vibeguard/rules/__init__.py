@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from . import crypto, dangerous, injection, secrets, web  # noqa: F401
+from . import crypto, dangerous, golang, injection, php, secrets, web  # noqa: F401
 from .base import Rule, all_rules, register
 
 __all__ = ["Rule", "all_rules", "register"]

@@ -4,7 +4,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)
 ![runtime deps: 0](https://img.shields.io/badge/runtime%20deps-0-brightgreen.svg)
-![tests: 69 passing](https://img.shields.io/badge/tests-69%20passing-brightgreen.svg)
+![tests: 79 passing](https://img.shields.io/badge/tests-79%20passing-brightgreen.svg)
 
 바이브코딩(vibe coding)을 위한 보안 가드레일.
 
@@ -114,9 +114,11 @@ vibeguard gui --port 8080
 | 인젝션(injection) | VG-SQLI-001~004, VG-SSTI-001 | f-string/템플릿/문자열결합 SQL, MongoDB $where, Flask 템플릿 인젝션(SSTI) |
 | 웹 설정(web) | VG-WEB-001~011 | debug=True/Django DEBUG, 전체 허용 CORS, TLS/SSL 검증 비활성화, 0.0.0.0 바인딩, innerHTML, 오픈 리다이렉트 |
 | 약한 암호화(crypto) | VG-CRYPTO-001~006 | MD5/SHA1, random 토큰, Math.random, DES/ECB, JWT 서명검증 비활성화/none |
+| Go | VG-GO-001~003 | InsecureSkipVerify(TLS), exec.Command+Sprintf, SQL+Sprintf |
+| PHP | VG-PHP-001~003 | eval, 셸 명령 함수+변수, $_GET/$_POST 직접 쿼리 |
 | 공급망(supply-chain) | VG-SLOP-001~002 | 레지스트리에 없는 환각 패키지, 유명 패키지 오타스쿼팅 |
 
-지원 언어: Python, JavaScript/TypeScript(.js/.jsx/.ts/.tsx). 시크릿 규칙은 모든 텍스트 파일에 적용됩니다.
+지원 언어: Python, JavaScript/TypeScript(.js/.jsx/.ts/.tsx), Go(.go), PHP(.php). 시크릿 규칙은 모든 텍스트 파일에 적용됩니다.
 
 ## 슬롭스쿼팅이란
 
