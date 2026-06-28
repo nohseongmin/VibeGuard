@@ -123,32 +123,32 @@ INDEX_HTML = r"""<!DOCTYPE html>
 <title>VibeGuard — 바이브코딩 보안 스캐너</title>
 <style>
   :root{
-    --bg:#0b0f15; --panel:#141b24; --panel2:#1b2531; --border:#27313d;
-    --text:#e6edf3; --muted:#94a3b2; --accent:#3fb950; --accent2:#2ea043;
-    --crit:#e5484d; --high:#f76808; --med:#ffb224; --low:#4593e6; --info:#8b949e;
-    --shadow:0 8px 30px rgba(0,0,0,.35);
+    --bg:#0B0B0F; --panel:#15161A; --panel2:#1B1D22; --border:#25272E;
+    --text:#FFFFFF; --muted:#9BA0A8; --accent:#29D17F; --accent2:#22B86E;
+    --crit:#FF4D4D; --high:#FF8A3D; --med:#FFC53D; --low:#5AA2FF; --info:#8A8F99;
+    --shadow:none;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#13212c 0,var(--bg) 60%);
+  body{margin:0;background:var(--bg);
     color:var(--text);font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
     line-height:1.55;min-height:100vh}
   a{color:#6cb6ff;text-decoration:none}
   a:hover{text-decoration:underline}
   header{padding:26px 22px 10px;max-width:1040px;margin:0 auto}
   .brand{display:flex;align-items:center;gap:12px}
-  .logo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
-    background:linear-gradient(135deg,var(--accent),#1f6feb);font-size:22px;box-shadow:var(--shadow)}
+  .logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+    background:#000;border:1px solid var(--border)}
   .brand h1{font-size:22px;margin:0;letter-spacing:.3px}
   .brand .tag{color:var(--muted);font-size:13px;margin-top:2px}
   main{max-width:1040px;margin:0 auto;padding:8px 22px 60px}
   .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--panel);
     border:1px solid var(--border);border-radius:14px;padding:12px;margin:14px 0 8px;box-shadow:var(--shadow)}
-  .bar input[type=text]{flex:1;min-width:240px;background:#0d141d;border:1px solid var(--border);
+  .bar input[type=text]{flex:1;min-width:240px;background:#0E0F13;border:1px solid var(--border);
     color:var(--text);border-radius:10px;padding:11px 13px;font-size:14px;font-family:ui-monospace,Consolas,monospace}
   .bar input[type=text]:focus{outline:none;border-color:var(--accent)}
   .chk{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;user-select:none;cursor:pointer}
-  button{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#05210f;border:0;
-    font-weight:700;font-size:14px;padding:11px 20px;border-radius:10px;cursor:pointer;transition:filter .15s}
+  button{background:var(--accent);color:#062012;border:0;
+    font-weight:700;font-size:14px;padding:11px 22px;border-radius:11px;cursor:pointer;transition:filter .15s}
   button:hover{filter:brightness(1.08)} button:disabled{opacity:.55;cursor:default}
   .hint{color:var(--muted);font-size:12.5px;margin:2px 2px 0}
   #status{margin:14px 2px;color:var(--muted);min-height:20px}
@@ -182,7 +182,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
     background:var(--panel2);border:1px solid var(--border);padding:2px 7px;border-radius:6px}
   .sloptag{font-size:11px;font-weight:700;color:#0b0f15;background:#c8a2ff;padding:2px 8px;border-radius:6px}
   .loc{color:var(--muted);font-size:12.5px;font-family:ui-monospace,Consolas,monospace;margin:8px 0 0}
-  pre.snip{margin:8px 0;background:#0d141d;border:1px solid var(--border);border-radius:8px;
+  pre.snip{margin:8px 0;background:#0E0F13;border:1px solid var(--border);border-radius:8px;
     padding:9px 12px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#d6dee7}
   .row{margin-top:7px;font-size:13.5px}
   .row .k{color:var(--muted);margin-right:6px}
@@ -194,7 +194,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
 <body>
 <header>
   <div class="brand">
-    <div class="logo">🛡️</div>
+    <div class="logo"><svg width="25" height="25" viewBox="0 0 1024 1024" aria-hidden="true"><path d="M300 256 Q284 256 284 272 L284 528 C284 612 372 700 512 786 C652 700 740 612 740 528 L740 272 Q740 256 724 256 Z" fill="#fff"/><path d="M430 508 L492 566 L612 438" fill="none" stroke="#29D17F" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     <div>
       <h1>VibeGuard</h1>
       <div class="tag">바이브코딩 보안 스캐너 · AI 생성 코드의 취약점과 환각 패키지를 잡아냅니다</div>
