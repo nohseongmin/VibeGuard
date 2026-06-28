@@ -1,0 +1,5 @@
+<svg width="512" height="512" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="VibeGuard">
+  <rect width="1024" height="1024" rx="230" fill="#0B0B0F"/>
+  <path d="M300 256 Q284 256 284 272 L284 528 C284 612 372 700 512 786 C652 700 740 612 740 528 L740 272 Q740 256 724 256 Z" fill="#FFFFFF"/>
+  <path d="M430 508 L492 566 L612 438" fill="none" stroke="#29D17F" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

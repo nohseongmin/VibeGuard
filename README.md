@@ -1,4 +1,10 @@
-# VibeGuard
+<p align="center">
+  <img src="assets/icon.svg" width="96" alt="VibeGuard"/>
+</p>
+
+<h1 align="center">VibeGuard</h1>
+
+<p align="center">바이브코딩을 위한 보안 가드레일 · AI 생성 코드의 취약점과 환각 패키지를 잡아냅니다</p>
 
 ![CI](https://github.com/nohseongmin/VibeGuard/actions/workflows/vibeguard.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)

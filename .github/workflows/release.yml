@@ -19,12 +19,15 @@ jobs:
           - os: windows-latest
             asset: VibeGuard-windows.exe
             src: dist/VibeGuard.exe
+            iconarg: "--icon assets/icon.ico"
           - os: macos-latest
             asset: VibeGuard-macos
             src: dist/VibeGuard
+            iconarg: ""
           - os: ubuntu-latest
             asset: VibeGuard-linux
             src: dist/VibeGuard
+            iconarg: ""
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +37,7 @@ jobs:
       - name: Install
         run: pip install -e . pyinstaller
       - name: Build single-file executable
-        run: pyinstaller --onefile --name VibeGuard packaging/vibeguard_app.py
+        run: pyinstaller --onefile --name VibeGuard ${{ matrix.iconarg }} packaging/vibeguard_app.py
       - name: Rename asset
         shell: bash
         run: |
