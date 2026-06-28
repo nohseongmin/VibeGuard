@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VibeGuard 자동 데모</title>
+<style>
+  :root{--bg:#0B0B0F;--surf:#15161A;--surf2:#1B1D22;--line:#25272E;--text:#FFFFFF;--muted:#9BA0A8;
+    --green:#29D17F;--crit:#FF4D4D;--high:#FF8A3D;--med:#FFC53D;--low:#5AA2FF;--slop:#C8A2FF;
+    --mono:Consolas,'Courier New',monospace;
+    --sans:'Malgun Gothic','맑은 고딕',system-ui,-apple-system,'Segoe UI',sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans)}
+  #app{height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #stage{width:min(96vw,1040px);aspect-ratio:16/9;background:var(--bg);position:relative;
+    border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .scene{position:absolute;inset:0;padding:46px 52px;opacity:0;transition:opacity .6s ease;
+    display:flex;flex-direction:column;justify-content:center}
+  .scene.on{opacity:1}
+  .kicker{color:var(--green);font-weight:700;font-size:18px;letter-spacing:.5px;margin-bottom:14px}
+  .big{font-size:40px;font-weight:700;line-height:1.25}
+  .big .g{color:var(--green)}
+  .sub{color:var(--muted);font-size:20px;margin-top:16px;line-height:1.5}
+  .brandrow{display:flex;align-items:center;gap:16px}
+  .logo{width:64px;height:64px;border-radius:16px;background:#000;border:1px solid var(--line);
+    display:grid;place-items:center}
+  .title{font-size:46px;font-weight:700}
+  .stat{display:flex;gap:34px;margin-top:26px;flex-wrap:wrap}
+  .stat div b{display:block;font-size:34px;font-weight:700}
+  .stat div span{color:var(--muted);font-size:15px}
+  .term{background:#0E0F13;border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+    font-family:var(--mono);font-size:18px;color:#D6DAE2;margin-top:10px}
+  .term .p{color:var(--green)}
+  .cards{display:flex;flex-direction:column;gap:11px;margin-top:6px}
+  .card{background:var(--surf);border:1px solid var(--line);border-left:4px solid var(--line);
+    border-radius:12px;padding:12px 15px;opacity:0;transform:translateY(8px);
+    transition:opacity .45s,transform .45s}
+  .card.show{opacity:1;transform:none}
+  .card .h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .badge{font-size:13px;font-weight:700;padding:2px 9px;border-radius:6px;color:#0B0B0F}
+  .ttl{font-weight:700;font-size:17px}
+  .rid{font-family:var(--mono);font-size:13px;color:var(--muted);background:var(--surf2);
+    border:1px solid var(--line);padding:1px 7px;border-radius:6px}
+  .slopt{font-size:12px;font-weight:700;color:#2a1a4a;background:var(--slop);padding:2px 8px;border-radius:6px}
+  .csnip{font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:7px}
+  .score{display:flex;align-items:center;gap:28px}
+  .ring{width:150px;height:150px;border-radius:50%;border:10px solid var(--crit);display:grid;
+    place-items:center;flex:0 0 auto}
+  .ring .n{font-size:50px;font-weight:800}
+  .gradeF{display:inline-block;background:var(--crit);color:#0B0B0F;font-weight:700;font-size:20px;
+    padding:3px 16px;border-radius:999px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .chip{display:inline-flex;align-items:center;gap:7px;background:var(--surf2);border:1px solid var(--line);
+    border-radius:999px;padding:6px 13px;font-size:15px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .drop{margin-top:18px;border:2px dashed #3A3D46;border-radius:16px;padding:26px;text-align:center;color:var(--muted);font-size:18px}
+  .drop b{color:var(--text)}
+  #caption{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);
+    padding:16px 24px;font-size:21px;line-height:1.5;min-height:64px;display:flex;align-items:center;
+    border-top:1px solid var(--line)}
+  #bar{position:absolute;left:0;top:0;height:4px;background:var(--green);width:0}
+  #start{position:absolute;inset:0;background:rgba(11,11,15,.92);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:18px;z-index:9;cursor:pointer}
+  #start .b{font-size:26px;font-weight:700}
+  #start .s{color:var(--muted);font-size:16px;text-align:center;line-height:1.6}
+  #start .play{width:88px;height:88px;border-radius:50%;background:var(--green);color:#062012;
+    display:grid;place-items:center;font-size:34px;font-weight:800}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <div id="bar"></div>
+    <div id="scene" class="scene"></div>
+    <div id="caption"></div>
+    <div id="start">
+      <div class="play">▶</div>
+      <div class="b">VibeGuard 자동 데모</div>
+      <div class="s">클릭하면 약 2분간 자동으로 재생됩니다.<br>전체화면(F11) 후 화면 녹화를 켜고 클릭하세요. 끝나면 그대로 시연영상이 됩니다.</div>
+    </div>
+  </div>
+</div>
+<script>
+var SHIELD='<svg width="38" height="38" viewBox="0 0 1024 1024"><path d="M300 256 Q284 256 284 272 L284 528 C284 612 372 700 512 786 C652 700 740 612 740 528 L740 272 Q740 256 724 256 Z" fill="#fff"/><path d="M430 508 L492 566 L612 438" fill="none" stroke="#29D17F" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function card(sev,col,title,rid,snip,slop){
+  return '<div class="card" data-card style="border-left-color:'+col+'">'
+    +'<div class="h"><span class="badge" style="background:'+col+'">'+sev+'</span>'
+    +'<span class="ttl">'+title+'</span><span class="rid">'+rid+'</span>'
+    +(slop?'<span class="slopt">공급망/슬롭스쿼팅</span>':'')+'</div>'
+    +'<div class="csnip">'+snip+'</div></div>';
+}
+var SCENES=[
+ {dur:9000,cap:"요즘은 코딩을 몰라도 AI에게 맡겨 앱과 서비스를 만드는 시대입니다. 이걸 '바이브코딩'이라고 부릅니다.",
+  html:'<div class="brandrow"><div class="logo">'+SHIELD+'</div><div class="title">VibeGuard</div></div>'
+   +'<div class="sub">바이브코딩을 위한 보안 가드레일 — AI가 만든 코드의 취약점과 가짜 패키지를 잡아냅니다.</div>'},
+ {dur:10000,cap:"그런데 AI가 만든 코드의 약 45%에 보안 취약점이 섞여 있다는 분석이 있습니다. 비전문가에게 보안은 너무 어렵습니다.",
+  html:'<div class="kicker">왜 필요한가</div><div class="big">AI가 만든 코드,<br><span class="g">그대로 배포해도 안전할까요?</span></div>'
+   +'<div class="sub">하드코딩된 키 · eval 코드 실행 · SQL 인젝션 · 약한 암호 · 가짜 패키지…<br>좋은 아이디어가 보안 사고 한 번으로 무너질 수 있습니다.</div>'},
+ {dur:8000,cap:"VibeGuard는 검사할 폴더를 고르고 스캔만 누르면 됩니다.",
+  html:'<div class="kicker">사용법</div><div class="big">폴더를 고르고 <span class="g">스캔</span>.</div>'
+   +'<div class="term"><span class="p">$</span> vibeguard scan examples/vibe_coded_app</div>'
+   +'<div class="term" style="color:var(--green)">스캔 중… 3개 파일 분석</div>'},
+ {dur:13000,cap:"숨어 있던 문제들이 심각한 순서대로 정리되어 나옵니다. 각 항목마다 어디가, 왜 위험한지 보여줍니다.",
+  reveal:true,
+  html:'<div class="kicker">탐지 결과</div><div class="cards">'
+   +card('치명적','var(--crit)','eval()로 외부 입력 실행 — 원격 코드 실행','VG-EXEC','server.js:38  const result = eval(req.query.expr);')
+   +card('높음','var(--high)','TLS 인증서 검증 비활성화','VG-WEB','server.js:43  rejectUnauthorized: false')
+   +card('중간','var(--med)','MD5로 비밀번호 해시 — 취약한 암호','VG-CRYPTO','app.py:45  hashlib.md5(pw)')
+   +'</div>'},
+ {dur:11000,cap:"가장 특징적인 기능입니다. AI가 지어낸 가짜 패키지(슬롭스쿼팅)까지 잡아 공급망 공격을 막습니다.",
+  reveal:true,
+  html:'<div class="kicker">차별점 — 슬롭스쿼팅</div><div class="cards">'
+   +card('중간','var(--med)',"'reqeusts' — 유명 패키지 'requests'의 오타·환각",'VG-SLOP','requirements.txt:1  reqeusts',true)
+   +card('중간','var(--med)',"'expres' — 'express'와 한 글자 차이",'VG-SLOP','package.json  "expres"',true)
+   +'</div><div class="sub" style="font-size:17px">공격자가 이런 이름을 미리 선점해 악성코드를 심습니다. 일반 도구는 놓치는 위협입니다.</div>'},
+ {dur:9000,cap:"모든 결과는 0부터 100까지 보안 점수로 요약됩니다. 이 앱은 0점, F등급이네요.",
+  html:'<div class="kicker">한눈에</div><div class="score"><div class="ring"><div class="n">0</div></div>'
+   +'<div><span class="gradeF">등급 F</span><div class="sub" style="margin-top:10px">치명적 문제가 있습니다. 배포 전에 반드시 고치세요.</div>'
+   +'<div class="chips"><span class="chip"><span class="dot" style="background:var(--crit)"></span>치명적 4</span>'
+   +'<span class="chip"><span class="dot" style="background:var(--high)"></span>높음 8</span>'
+   +'<span class="chip"><span class="dot" style="background:var(--med)"></span>중간 6</span>'
+   +'<span class="chip"><span class="dot" style="background:var(--low)"></span>낮음 1</span></div></div></div>'},
+ {dur:10000,cap:"코딩을 몰라도 됩니다. 실행파일을 받아 검사할 폴더를 끌어다 놓기만 하면 끝납니다.",
+  html:'<div class="kicker">누구나 — 터미널 없이</div><div class="big">폴더를 <span class="g">끌어다 놓으면</span> 끝.</div>'
+   +'<div class="drop">📁  <b>내 프로젝트 폴더</b> 를 VibeGuard 실행파일 위로 드래그<br><span style="font-size:15px">→ 브라우저에 보안 리포트가 자동으로 열립니다 (Python·터미널 불필요)</span></div>'},
+ {dur:9000,cap:"규칙 54개, 6개 언어 지원, 런타임 의존성 0. AI가 만든 코드를, 안전하게.",
+  html:'<div class="brandrow"><div class="logo">'+SHIELD+'</div><div class="title">VibeGuard</div></div>'
+   +'<div class="stat"><div><b>54</b><span>탐지 규칙</span></div><div><b>6</b><span>지원 언어</span></div>'
+   +'<div><b class="g">0</b><span>런타임 의존성</span></div></div>'
+   +'<div class="sub">github.com/nohseongmin/VibeGuard · 오픈소스(MIT)</div>'},
+];
+var stage=document.getElementById('scene'),cap=document.getElementById('caption'),bar=document.getElementById('bar');
+var i=-1,total=SCENES.reduce(function(a,s){return a+s.dur},0),elapsed=0;
+function next(){
+  i++;
+  if(i>=SCENES.length){stage.classList.remove('on');cap.textContent="";bar.style.width="100%";return;}
+  var s=SCENES[i];
+  stage.classList.remove('on');
+  setTimeout(function(){
+    stage.innerHTML=s.html; cap.textContent=s.cap; stage.classList.add('on');
+    if(s.reveal){var cs=stage.querySelectorAll('[data-card]');cs.forEach(function(c,k){setTimeout(function(){c.classList.add('show')},500+k*900)});}
+    var seg=s.dur, start=elapsed;
+    var t0=Date.now();
+    var iv=setInterval(function(){var p=(start+Math.min(s.dur,Date.now()-t0))/total;bar.style.width=(p*100)+"%";if(Date.now()-t0>=s.dur)clearInterval(iv)},60);
+    elapsed+=s.dur;
+    setTimeout(next,s.dur);
+  },450);
+}
+document.getElementById('start').addEventListener('click',function(){this.style.display='none';next();});
+</script>
+</body>
+</html>
