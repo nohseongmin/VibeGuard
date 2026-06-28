@@ -6,6 +6,8 @@
 
 <p align="center">바이브코딩을 위한 보안 가드레일 · AI 생성 코드의 취약점과 환각 패키지를 잡아냅니다</p>
 
+<p align="center"><img src="assets/intro.svg" width="660" alt="VibeGuard 데모 — 스캔, 탐지, 보안 점수"></p>
+
 ![CI](https://github.com/nohseongmin/VibeGuard/actions/workflows/vibeguard.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)
