@@ -55,6 +55,11 @@
   .dot{width:10px;height:10px;border-radius:50%}
   .drop{margin-top:18px;border:2px dashed #3A3D46;border-radius:16px;padding:26px;text-align:center;color:var(--muted);font-size:18px}
   .drop b{color:var(--text)}
+  .winframe{margin-top:6px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0E0F13}
+  .winbar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#17181D;border-bottom:1px solid var(--line)}
+  .wd{width:11px;height:11px;border-radius:50%}.wd.r{background:#FF5F57}.wd.y{background:#FEBC2E}.wd.g{background:#28C840}
+  .addr{margin-left:8px;font-family:var(--mono);font-size:13px;color:var(--muted);background:#0E0F13;border:1px solid var(--line);border-radius:6px;padding:3px 12px}
+  .shot{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;background:#0B0B0F}
   #caption{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);
     padding:16px 24px;font-size:21px;line-height:1.5;min-height:64px;display:flex;align-items:center;
     border-top:1px solid var(--line)}
@@ -100,6 +105,10 @@ var SCENES=[
   html:'<div class="kicker">사용법</div><div class="big">폴더를 고르고 <span class="g">스캔</span>.</div>'
    +'<div class="term"><span class="p">$</span> vibeguard scan examples/vibe_coded_app</div>'
    +'<div class="term" style="color:var(--green)">스캔 중… 3개 파일 분석</div>'},
+ {dur:9000,cap:"실제로는 이렇게, 브라우저에 결과 리포트가 그대로 뜹니다.",
+  html:'<div class="kicker">실제 사용 화면</div>'
+   +'<div class="winframe"><div class="winbar"><span class="wd r"></span><span class="wd y"></span><span class="wd g"></span><span class="addr">127.0.0.1:8000 · VibeGuard</span></div>'
+   +'<img src="../assets/screenshot.png" class="shot" alt="VibeGuard 결과 화면"></div>'},
  {dur:13000,cap:"숨어 있던 문제들이 심각한 순서대로 정리되어 나옵니다. 각 항목마다 어디가, 왜 위험한지 보여줍니다.",
   reveal:true,
   html:'<div class="kicker">탐지 결과</div><div class="cards">'
@@ -130,23 +139,34 @@ var SCENES=[
    +'<div class="sub">github.com/nohseongmin/VibeGuard · 오픈소스(MIT)</div>'},
 ];
 var stage=document.getElementById('scene'),cap=document.getElementById('caption'),bar=document.getElementById('bar');
-var i=-1,total=SCENES.reduce(function(a,s){return a+s.dur},0),elapsed=0;
+var SPEED=1.25;                       // 1.25배속
+var synth=window.speechSynthesis,koVoice=null;
+function pickVoice(){try{var v=synth.getVoices();koVoice=v.filter(function(x){return /^ko/i.test(x.lang||"")})[0]||null;}catch(e){}}
+if(synth){pickVoice();synth.onvoiceschanged=pickVoice;}
+var i=-1,total=SCENES.reduce(function(a,s){return a+s.dur/SPEED},0),elapsed=0;
 function next(){
   i++;
-  if(i>=SCENES.length){stage.classList.remove('on');cap.textContent="";bar.style.width="100%";return;}
+  if(i>=SCENES.length){stage.classList.remove('on');cap.textContent="";bar.style.width="100%";if(synth)try{synth.cancel()}catch(e){}return;}
   var s=SCENES[i];
   stage.classList.remove('on');
   setTimeout(function(){
     stage.innerHTML=s.html; cap.textContent=s.cap; stage.classList.add('on');
-    if(s.reveal){var cs=stage.querySelectorAll('[data-card]');cs.forEach(function(c,k){setTimeout(function(){c.classList.add('show')},500+k*900)});}
-    var seg=s.dur, start=elapsed;
-    var t0=Date.now();
-    var iv=setInterval(function(){var p=(start+Math.min(s.dur,Date.now()-t0))/total;bar.style.width=(p*100)+"%";if(Date.now()-t0>=s.dur)clearInterval(iv)},60);
-    elapsed+=s.dur;
-    setTimeout(next,s.dur);
+    if(s.reveal){var cs=stage.querySelectorAll('[data-card]');cs.forEach(function(c,k){setTimeout(function(){c.classList.add('show')},400+k*800)});}
+    var seg=s.dur/SPEED, start=elapsed, t0=Date.now();
+    var iv=setInterval(function(){var p=(start+Math.min(seg,Date.now()-t0))/total;bar.style.width=Math.min(100,p*100)+"%"},70);
+    elapsed+=seg;
+    var done=false;function go(){if(done)return;done=true;clearInterval(iv);next();}
+    if(synth&&s.cap){                 // 한국어 음성 해설(TTS)이 타이밍을 주도
+      try{synth.cancel()}catch(e){}
+      var u=new SpeechSynthesisUtterance(s.cap);u.lang='ko-KR';u.rate=1.25;if(koVoice)u.voice=koVoice;
+      u.onend=function(){setTimeout(go,450)};
+      u.onerror=function(){setTimeout(go,seg)};
+      try{synth.speak(u)}catch(e){setTimeout(go,seg)}
+      setTimeout(function(){go()},Math.max(seg,16000)+5000);   // 안전장치
+    }else{setTimeout(go,seg);}
   },450);
 }
-document.getElementById('start').addEventListener('click',function(){this.style.display='none';next();});
+document.getElementById('start').addEventListener('click',function(){this.style.display='none';if(synth)try{synth.resume()}catch(e){}next();});
 </script>
 </body>
 </html>
