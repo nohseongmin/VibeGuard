@@ -122,6 +122,12 @@ var SCENES=[
    +card('중간','var(--med)',"'reqeusts' — 유명 패키지 'requests'의 오타·환각",'VG-SLOP','requirements.txt:1  reqeusts',true)
    +card('중간','var(--med)',"'expres' — 'express'와 한 글자 차이",'VG-SLOP','package.json  "expres"',true)
    +'</div><div class="sub" style="font-size:17px">공격자가 이런 이름을 미리 선점해 악성코드를 심습니다. 일반 도구는 놓치는 위협입니다.</div>'},
+ {dur:11000,cap:"여기에 더해, 쓰고 있는 라이브러리의 알려진 취약점(CVE)도 실시간으로 확인합니다. 어제 공개된 취약점도 도구를 업데이트하지 않고 바로 반영됩니다.",
+  reveal:true,
+  html:'<div class="kicker">항상 최신 — 알려진 취약점(CVE)</div><div class="cards">'
+   +card('높음','var(--high)','requests 2.5.0 — 인증정보 유출(CVE-2018-18074)','VG-CVE','requirements.txt:1  → 2.20.0 이상으로 업그레이드')
+   +card('중간','var(--med)','requests 2.5.0 — 최신 취약점 CVE-2026-25645','VG-CVE','requirements.txt:1  OSV.dev 실시간 조회')
+   +'</div><div class="sub" style="font-size:17px">취약점 목록을 도구에 내장하지 않고 OSV.dev에 물어봐, 항상 최신 상태로 점검합니다.</div>'},
  {dur:9000,cap:"모든 결과는 0부터 100까지 보안 점수로 요약됩니다. 이 앱은 0점, F등급이네요.",
   html:'<div class="kicker">한눈에</div><div class="score"><div class="ring"><div class="n">0</div></div>'
    +'<div><span class="gradeF">등급 F</span><div class="sub" style="margin-top:10px">치명적 문제가 있습니다. 배포 전에 반드시 고치세요.</div>'
@@ -132,10 +138,11 @@ var SCENES=[
  {dur:10000,cap:"코딩을 몰라도 됩니다. 실행파일을 받아 검사할 폴더를 끌어다 놓기만 하면 끝납니다.",
   html:'<div class="kicker">누구나 — 터미널 없이</div><div class="big">폴더를 <span class="g">끌어다 놓으면</span> 끝.</div>'
    +'<div class="drop">📁  <b>내 프로젝트 폴더</b> 를 VibeGuard 실행파일 위로 드래그<br><span style="font-size:15px">→ 브라우저에 보안 리포트가 자동으로 열립니다 (Python·터미널 불필요)</span></div>'},
- {dur:9000,cap:"규칙 54개, 6개 언어 지원, 런타임 의존성 0. AI가 만든 코드를, 안전하게.",
+ {dur:10000,cap:"코드 규칙 54개에 슬롭스쿼팅과 CVE 실시간 검사까지, 6개 언어 지원, 런타임 의존성 0. AI가 만든 코드를, 안전하게.",
   html:'<div class="brandrow"><div class="logo">'+SHIELD+'</div><div class="title">VibeGuard</div></div>'
-   +'<div class="stat"><div><b>54</b><span>탐지 규칙</span></div><div><b>6</b><span>지원 언어</span></div>'
+   +'<div class="stat"><div><b>54</b><span>코드 규칙</span></div><div><b>6</b><span>지원 언어</span></div>'
    +'<div><b class="g">0</b><span>런타임 의존성</span></div></div>'
+   +'<div class="sub" style="margin-bottom:6px">+ 슬롭스쿼팅 · 알려진 취약점(CVE) 실시간 검사</div>'
    +'<div class="sub">github.com/nohseongmin/VibeGuard · 오픈소스(MIT)</div>'},
 ];
 var stage=document.getElementById('scene'),cap=document.getElementById('caption'),bar=document.getElementById('bar');
