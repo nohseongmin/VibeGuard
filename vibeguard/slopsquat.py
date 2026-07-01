@@ -320,4 +320,13 @@ def check_project(root: str, offline: bool = False, timeout: float = 4.0) -> Lis
         findings.extend(_check_one(name, "pypi", registry, _POPULAR_PYPI, where))
     for name, where in sorted(npm_pkgs.items()):
         findings.extend(_check_one(name, "npm", registry, _POPULAR_NPM, where))
+
+    # 의존성의 '알려진 취약점(CVE)' — OSV.dev 실시간 조회. 오프라인이면 건너뛴다.
+    # 어떤 이유로든 실패해도 스캔 전체가 멈추지 않도록 감싼다.
+    if not offline:
+        try:
+            from .cve import check_project_cve
+            findings.extend(check_project_cve(root, offline=offline, timeout=max(timeout, 6.0)))
+        except Exception:
+            pass
     return findings

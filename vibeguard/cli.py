@@ -116,15 +116,18 @@ def _run_rules(args) -> int:
     from .rules import all_rules
 
     rules = sorted(all_rules(), key=lambda r: r.rule_id)
-    print(f"탑재된 규칙: {len(rules)}개 (+ 공급망 검사 VG-SLOP-001/002)\n")
+    print(f"탑재된 규칙: {len(rules)}개 (+ 공급망 검사 VG-SLOP, 취약점 검사 VG-CVE)\n")
     cur = None
     for r in rules:
         if r.category != cur:
             cur = r.category
             print(f"[{cur}]")
         print(f"  {r.rule_id}  ({r.severity.label})  {r.title}")
+    print("[supply-chain]")
     print("  VG-SLOP-001  (높음)  레지스트리에 없는 패키지(슬롭스쿼팅)")
     print("  VG-SLOP-002  (중간)  유명 패키지 오타스쿼팅 후보")
+    print("[vulnerable-dependency]")
+    print("  VG-CVE-001   (동적)  의존성 버전의 알려진 취약점(CVE) — OSV.dev 실시간 조회")
     return 0
 
 

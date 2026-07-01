@@ -2,6 +2,13 @@
 
 이 프로젝트의 주요 변경 사항을 기록합니다. 형식은 [Keep a Changelog](https://keepachangelog.com/)를 따릅니다.
 
+## [Unreleased]
+
+### 추가됨
+- 알려진 취약점(CVE) 실시간 검사 (VG-CVE-001) — `requirements.txt`/`package.json`에 고정된 의존성 버전을 [OSV.dev](https://osv.dev)에 조회해, 그 버전에 공개된 CVE/GHSA와 수정 버전을 보고합니다.
+  - 코드 패턴 규칙(SAST)이 놓치는 "취약한 라이브러리 사용(SCA)"을 보완합니다. 취약점 목록을 도구에 내장하지 않고 OSV에 실시간 조회하므로, 도구 업데이트 없이 항상 최신 CVE가 반영됩니다.
+  - 호출은 표준 라이브러리(`urllib`)만 사용 — 런타임 의존성 0 유지. `--offline`이면 건너뜁니다. 네트워크 실패 시 스캔을 멈추지 않고 조용히 넘어갑니다.
+
 ## [0.1.0] - 2026-06
 
 최초 공개 릴리스.
@@ -25,4 +32,5 @@
 - 지원 언어: Python, JavaScript/TypeScript, Go, PHP
 - 도구 자체 코드 스캔 시 발견 0건, 단위 테스트 79개 통과
 
+[Unreleased]: https://github.com/nohseongmin/VibeGuard/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/nohseongmin/VibeGuard/releases/tag/v0.1.0
