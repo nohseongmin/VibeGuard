@@ -17,6 +17,84 @@ def test_parse_requirements_only_pinned():
     assert all(n != "requests" for n, _ in got)
 
 
+def test_parse_requirements_extras_syntax():
+    # uvicorn[standard]==0.23.0 처럼 extras 표기도 잡아야 한다
+    text = "uvicorn[standard]==0.23.0\ncelery[redis,msgpack]==5.2.0\n"
+    got = dict(cve.parse_requirements(text))
+    assert got["uvicorn"] == "0.23.0"
+    assert got["celery"] == "5.2.0"
+
+
+def test_parse_package_lock_v3():
+    text = """{
+      "lockfileVersion": 3,
+      "packages": {
+        "": {"name": "myapp", "version": "1.0.0"},
+        "node_modules/express": {"version": "4.17.1"},
+        "node_modules/express/node_modules/qs": {"version": "6.7.0"}
+      }
+    }"""
+    got = dict(cve.parse_package_lock(text))
+    assert got["express"] == "4.17.1"
+    assert got["qs"] == "6.7.0"          # 중첩 node_modules 는 마지막 이름
+    assert "myapp" not in got            # 루트("" 키)는 제외
+
+
+def test_parse_package_lock_v1():
+    text = """{
+      "lockfileVersion": 1,
+      "dependencies": {
+        "lodash": {"version": "4.17.15",
+                   "dependencies": {"inner": {"version": "1.0.0"}}}
+      }
+    }"""
+    got = dict(cve.parse_package_lock(text))
+    assert got["lodash"] == "4.17.15"
+    assert got["inner"] == "1.0.0"
+
+
+def test_parse_pipfile_lock():
+    text = '{"default": {"requests": {"version": "==2.5.0"}}, "develop": {"pytest": {"version": "==7.0.0"}}}'
+    got = dict(cve.parse_pipfile_lock(text))
+    assert got["requests"] == "2.5.0"
+    assert got["pytest"] == "7.0.0"
+
+
+def test_parse_poetry_lock():
+    text = '''
+[[package]]
+name = "flask"
+version = "0.12.2"
+description = "web framework"
+
+[[package]]
+name = "jinja2"
+version = "2.10"
+'''
+    got = dict(cve.parse_poetry_lock(text))
+    assert got["flask"] == "0.12.2"
+    assert got["jinja2"] == "2.10"
+
+
+def test_lockfile_wins_over_package_json(tmp_path):
+    # 같은 폴더에 락파일이 있으면 package.json 은 건너뛴다(정확 버전 우선)
+    (tmp_path / "package.json").write_text(
+        '{"dependencies": {"express": "^4.0.0"}}', encoding="utf-8")
+    (tmp_path / "package-lock.json").write_text(
+        '{"lockfileVersion": 3, "packages": {"node_modules/express": {"version": "4.17.1"}}}',
+        encoding="utf-8")
+    targets = cve._collect_manifests(str(tmp_path))
+    vers = [t[2] for t in targets if t[1] == "express"]
+    assert vers == ["4.17.1"]            # ^4.0.0(추정)이 아니라 설치본 4.17.1 하나만
+
+
+def test_collect_dedupes_same_target(tmp_path):
+    (tmp_path / "requirements.txt").write_text("flask==2.0.1\n", encoding="utf-8")
+    (tmp_path / "requirements-dev.txt").write_text("flask==2.0.1\n", encoding="utf-8")
+    targets = cve._collect_manifests(str(tmp_path))
+    assert len([t for t in targets if t[1] == "flask"]) == 1
+
+
 def test_clean_ver_strips_range_prefixes():
     assert cve._clean_ver("^1.2.3") == "1.2.3"
     assert cve._clean_ver("~1.2") == "1.2"

@@ -8,6 +8,12 @@
 - 알려진 취약점(CVE) 실시간 검사 (VG-CVE-001) — `requirements.txt`/`package.json`에 고정된 의존성 버전을 [OSV.dev](https://osv.dev)에 조회해, 그 버전에 공개된 CVE/GHSA와 수정 버전을 보고합니다.
   - 코드 패턴 규칙(SAST)이 놓치는 "취약한 라이브러리 사용(SCA)"을 보완합니다. 취약점 목록을 도구에 내장하지 않고 OSV에 실시간 조회하므로, 도구 업데이트 없이 항상 최신 CVE가 반영됩니다.
   - 호출은 표준 라이브러리(`urllib`)만 사용 — 런타임 의존성 0 유지. `--offline`이면 건너뜁니다. 네트워크 실패 시 스캔을 멈추지 않고 조용히 넘어갑니다.
+- 락파일 지원 — `package-lock.json`(v1/v2/v3)·`Pipfile.lock`·`poetry.lock`에서 실제 설치된 정확한 버전을 읽어 CVE를 조회합니다. 같은 폴더에 락파일이 있으면 `package.json`(범위 추정) 대신 락파일을 우선합니다.
+- `uvicorn[standard]==0.23.0` 같은 extras 표기 인식(이전에는 누락).
+- GUI·HTML 리포트의 CVE 발견 항목에 "알려진 취약점(CVE)" 배지 표시.
+
+### 개선됨
+- 취약점 상세 조회를 병렬화(표준 라이브러리 `concurrent.futures`)해 CVE 검사 속도 개선.
 
 ## [0.1.0] - 2026-06
 

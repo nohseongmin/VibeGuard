@@ -343,6 +343,8 @@ class HtmlReporter:
                 slop = ""
                 if "SLOP" in f.rule_id or f.category == "supply-chain":
                     slop = ' <span class="slop">공급망/슬롭스쿼팅</span>'
+                elif "CVE" in f.rule_id or f.category == "vulnerable-dependency":
+                    slop = ' <span class="slop">알려진 취약점(CVE)</span>'
                 col_str = f":{f.column}" if f.column else ""
                 cwe_html = ""
                 if f.cwe:

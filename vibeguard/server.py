@@ -317,6 +317,9 @@ INDEX_HTML = r"""<!DOCTYPE html>
     if((f.rule_id||"").indexOf("SLOP")>=0 || f.category==="supply-chain"){
       const st = document.createElement("span"); st.className="sloptag"; st.textContent="공급망/슬롭스쿼팅";
       top.appendChild(st);
+    } else if((f.rule_id||"").indexOf("CVE")>=0 || f.category==="vulnerable-dependency"){
+      const st = document.createElement("span"); st.className="sloptag"; st.textContent="알려진 취약점(CVE)";
+      top.appendChild(st);
     }
     card.appendChild(top);
 
