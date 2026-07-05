@@ -250,7 +250,13 @@ INDEX_HTML = r"""<!DOCTYPE html>
     $("scanBtn").disabled = true;
     $("summary").style.display = "none";
     $("cards").innerHTML = "";
-    $("status").innerHTML = '<span class="spinner"></span>스캔 중… (' + path + ')';
+    // 사용자 입력(path)을 innerHTML 로 넣으면 DOM 기반 XSS — 텍스트 노드로 안전하게 삽입
+    const st = $("status");
+    st.textContent = "";
+    const sp = document.createElement("span");
+    sp.className = "spinner";
+    st.appendChild(sp);
+    st.appendChild(document.createTextNode("스캔 중… (" + path + ")"));
     try{
       const res = await fetch("/api/scan?path=" + encodeURIComponent(path) + "&offline=" + offline);
       const data = await res.json();
