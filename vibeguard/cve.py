@@ -24,16 +24,14 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional, Tuple
 
 from .finding import Finding, Severity
+from .scanner import DEFAULT_SKIP_DIRS
 
 _BATCH_URL = "https://api.osv.dev/v1/querybatch"
 _VULN_URL = "https://api.osv.dev/v1/vulns/"
 _MAX_VULNS = 20    # 보고 상한
 _MAX_DETAIL = 30   # 상세 조회 상한(같은 CVE 가 GHSA·PYSEC 로 중복되므로 보고 상한보다 넉넉히)
 _WORKERS = 8       # 상세 조회 병렬 수
-_SKIP_DIRS = {
-    ".git", "node_modules", "venv", ".venv", "__pycache__",
-    ".mypy_cache", ".pytest_cache", "dist", "build",
-}
+_SKIP_DIRS = DEFAULT_SKIP_DIRS  # 스캐너와 동일한 제외 디렉터리(단일 출처)
 
 # pkg==1.2.3 및 extras 표기 pkg[extra1,extra2]==1.2.3 지원
 _REQ_RE = re.compile(

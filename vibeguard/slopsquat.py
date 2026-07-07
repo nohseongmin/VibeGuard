@@ -23,6 +23,7 @@ import urllib.request
 from typing import Dict, List, Optional, Set, Tuple
 
 from .finding import Finding, Severity
+from .scanner import DEFAULT_SKIP_DIRS
 
 # ---------------------------------------------------------------------------
 # 표준 라이브러리 판별
@@ -284,7 +285,7 @@ def check_project(root: str, offline: bool = False, timeout: float = 4.0) -> Lis
     else:
         files = []
         for dp, dirs, fns in os.walk(root):
-            dirs[:] = [x for x in dirs if x not in {".git", "node_modules", "venv", ".venv", "__pycache__"} and not x.startswith(".")]
+            dirs[:] = [x for x in dirs if x not in DEFAULT_SKIP_DIRS and not x.startswith(".")]
             for fn in fns:
                 files.append(os.path.join(dp, fn))
 
