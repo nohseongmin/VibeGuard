@@ -69,6 +69,15 @@ pip install -e .
 python -m vibeguard scan .
 ```
 
+### Docker로 실행 (파이썬 설치 불필요)
+
+```bash
+docker build -t vibeguard .
+docker run --rm -v "${PWD}:/scan:ro" vibeguard scan .
+```
+
+스캔 대상 폴더를 `/scan`에 읽기 전용(`:ro`)으로 마운트하므로 검사 대상 코드를 건드리지 않습니다.
+
 ## 사용법
 
 ```
