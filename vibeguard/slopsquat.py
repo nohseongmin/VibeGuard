@@ -188,7 +188,7 @@ class RegistryClient:
             return None
         if url in self._cache:
             return self._cache[url]
-        req = urllib.request.Request(url, method="GET", headers={"User-Agent": "VibeGuard"})
+        req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "VibeGuard"})
         result: Optional[bool]
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
