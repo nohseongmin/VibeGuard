@@ -12,7 +12,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)
 ![runtime deps: 0](https://img.shields.io/badge/runtime%20deps-0-brightgreen.svg)
-![tests: 91 passing](https://img.shields.io/badge/tests-91%20passing-brightgreen.svg)
+![tests: 123 passing](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)
 
 바이브코딩(vibe coding)을 위한 보안 가드레일.
 
@@ -38,22 +38,26 @@ AI가 생성한 코드의 보안 문제는 일화가 아니라 측정된 현상�
 - 비전문가용 설명: 각 발견 항목마다 "설명(왜 위험한가)"과 "해결(어떻게 고치는가)"을 한국어로 제공합니다.
 - 바이브 보안 점수(0~100)와 A~F 등급으로 한눈에 상태를 보여줍니다.
 - 바이브코딩 루프에 자동 결합: git pre-commit 훅, Claude Code 등 AI 에이전트용 PostToolUse 훅 설치를 지원합니다.
+- 데스크톱 앱(`vibeguard app`, 실행파일 더블클릭): 표준 라이브러리 tkinter 로 만든 네이티브 창. 폴더 드래그앤드롭 → 즉시 검사 → 창 안에서 결과 확인, 이전 검사 결과 다시 보기, 설정.
 - 출력 형식: 터미널, JSON, Markdown, SARIF(GitHub 코드 스캐닝/VS Code), 단독 HTML 리포트. 브라우저 GUI(`vibeguard gui`), 베이스라인(기존 코드 수용 후 새 문제만 보고), 설정 파일(`.vibeguard.json`: 규칙 비활성화·경로 제외)도 지원합니다.
 
 ## 비개발자용 빠른 시작 (터미널 없이)
 
-코딩을 몰라도 됩니다. 둘 중 편한 방법을 쓰세요.
+코딩을 몰라도 됩니다. [Releases](https://github.com/nohseongmin/VibeGuard/releases)에서 운영체제에 맞는 실행파일을 내려받아 **더블클릭**하면 앱 창이 열립니다(예: Windows `VibeGuard-windows.exe`). Python도, 터미널도, 브라우저도 필요 없습니다.
 
-방법 A — 실행파일 (Python 설치도 불필요)
-1. [Releases](https://github.com/nohseongmin/VibeGuard/releases)에서 운영체제에 맞는 실행파일을 내려받습니다(예: Windows `VibeGuard-windows.exe`).
-2. 검사할 프로젝트 폴더를 실행파일 위로 끌어다 놓으면(드래그&드롭) 브라우저에 보안 리포트가 바로 뜹니다.
-   - 그냥 더블클릭하면 경로 입력 화면(GUI)이 열립니다.
+앱에는 버튼이 셋뿐입니다.
 
-방법 B — 더블클릭 런처 (Python 필요)
-1. 저장소를 내려받습니다(초록색 Code → Download ZIP → 압축 해제).
-2. Windows는 `VibeGuard-GUI.bat`, macOS는 `VibeGuard-GUI.command`를 더블클릭하면 GUI가 열립니다. 폴더를 런처 위로 끌어다 놓으면 그 폴더를 스캔해 리포트를 엽니다.
+| 버튼 | 하는 일 |
+|---|---|
+| 검사 실행 | 검사할 폴더를 창에 **끌어다 놓으면** 즉시 검사하고, 결과를 같은 창 안에 보여줍니다(폴더 선택 버튼도 있습니다). |
+| 이전 검사 결과 | 지난 검사들을 **최신순**으로 보여주고, 클릭하면 그때 결과를 그대로 다시 엽니다. |
+| 설정 | 실시간 조회(가짜 패키지·CVE) 사용 여부, 표시할 최소 심각도, 제외할 폴더, 기록 보관 개수를 바꿉니다. |
 
-서버나 명령어 지식이 필요 없습니다. 결과는 위치·코드·설명·해결책이 담긴 카드로 보여줍니다. (실행파일은 관리자가 `v*` 태그를 푸시하면 자동으로 빌드되어 Releases에 올라갑니다.)
+<p align="center"><img src="assets/app-home.png" alt="VibeGuard 앱 홈 화면" width="620"></p>
+
+실행파일 아이콘 위로 폴더를 끌어다 놓으면 앱이 열리면서 그 폴더를 바로 검사합니다. 검사 기록과 설정은 사용자 폴더(Windows는 `%APPDATA%\VibeGuard`)에 저장됩니다.
+
+Python이 있다면 `python -m vibeguard app` 으로 같은 창을 띄울 수 있습니다. (실행파일은 관리자가 `v*` 태그를 푸시하면 자동으로 빌드되어 Releases에 올라갑니다.)
 
 ## 설치 (개발자/CLI)
 
@@ -94,14 +98,19 @@ vibeguard scan . --baseline .vibeguard.json   기존 발견은 숨기고 새로 
 vibeguard scan . --diff           git 변경 파일만 스캔(PR/CI에서 빠르게)
 vibeguard rules                   탑재된 규칙 목록 보기
 vibeguard init-hooks              git pre-commit 훅 설치
+vibeguard app                     데스크톱 앱 실행(네이티브 창)
 vibeguard gui                     브라우저 기반 GUI 실행(로컬 서버)
 ```
 
-## GUI (브라우저)
+## 앱 화면
 
-터미널이 익숙하지 않아도 쓸 수 있도록, 외부 프레임워크 없이 표준 라이브러리만으로 동작하는 로컬 웹 GUI를 제공합니다.
+터미널이 익숙하지 않아도 쓸 수 있도록 두 가지 화면을 제공합니다. 둘 다 표준 라이브러리만으로 동작합니다.
+
+- `vibeguard app` — 네이티브 창(tkinter). 실행파일을 더블클릭했을 때 열리는 화면이며, 폴더를 창에 끌어다 놓으면 바로 검사합니다.
+- `vibeguard gui` — 로컬 웹 GUI(http.server). 브라우저로 보고 싶거나 원격 접속이 필요할 때 씁니다.
 
 ```
+vibeguard app            # 데스크톱 앱 창 열기(폴더를 창에 끌어다 놓으면 검사)
 vibeguard gui            # http://127.0.0.1:8000 에서 GUI 실행(브라우저 자동 열림)
 vibeguard gui --port 8080
 ```

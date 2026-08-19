@@ -112,6 +112,13 @@ def _run_scan(args) -> int:
     return 0
 
 
+def _run_app(args) -> int:
+    """네이티브 창 앱을 띄운다(exe 더블클릭과 같은 화면)."""
+    from .app import main as app_main
+
+    return app_main([args.path] if getattr(args, "path", None) else [])
+
+
 def _run_rules(args) -> int:
     from .rules import all_rules
 
@@ -178,6 +185,10 @@ def build_parser() -> argparse.ArgumentParser:
     hp = sub.add_parser("init-hooks", help="git pre-commit 훅 설치")
     hp.add_argument("path", nargs="?", default=".", help="git 저장소 경로(기본: 현재 폴더)")
     hp.set_defaults(func=_run_init_hooks)
+
+    ap = sub.add_parser("app", help="데스크톱 앱 실행(네이티브 창)")
+    ap.add_argument("path", nargs="?", help="열자마자 검사할 폴더(선택)")
+    ap.set_defaults(func=_run_app)
 
     gp = sub.add_parser("gui", help="브라우저 기반 GUI 실행(로컬 서버)")
     gp.add_argument("--port", type=int, default=8000, help="포트(기본: 8000)")

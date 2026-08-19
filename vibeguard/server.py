@@ -11,11 +11,11 @@ import json
 import os
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import List
+from typing import Iterable, List, Optional
 from urllib.parse import urlparse, parse_qs
 
 from .finding import Finding, Severity
-from .scanner import Scanner, ScanResult
+from .scanner import DEFAULT_SKIP_DIRS, Scanner, ScanResult
 from .slopsquat import check_project
 from .score import summary as score_summary
 
@@ -25,9 +25,11 @@ def build_scan_payload(
     offline: bool = False,
     no_deps: bool = False,
     timeout: float = 4.0,
+    exclude: Optional[Iterable[str]] = None,
 ) -> dict:
     """경로를 스캔하고 GUI/JSON 용 직렬화 가능한 결과 dict 를 만든다."""
-    scanner = Scanner()
+    skip = (DEFAULT_SKIP_DIRS | {d.strip() for d in exclude if d.strip()}) if exclude else None
+    scanner = Scanner(skip_dirs=skip)
     result: ScanResult = scanner.scan(path)
     if not no_deps:
         dep_findings: List[Finding] = check_project(path, offline=offline, timeout=timeout)

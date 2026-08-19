@@ -19,15 +19,16 @@ jobs:
           - os: windows-latest
             asset: VibeGuard-windows.exe
             src: dist/VibeGuard.exe
-            iconarg: "--icon assets/icon.ico"
+            # 창 모드(--windowed)라 앱 뒤에 검은 콘솔이 뜨지 않는다
+            extra: '--windowed --icon assets/icon.ico --add-data "assets/icon.ico;assets"'
           - os: macos-latest
             asset: VibeGuard-macos
             src: dist/VibeGuard
-            iconarg: ""
+            extra: ""
           - os: ubuntu-latest
             asset: VibeGuard-linux
             src: dist/VibeGuard
-            iconarg: ""
+            extra: ""
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +38,8 @@ jobs:
       - name: Install
         run: pip install -e . pyinstaller
       - name: Build single-file executable
-        run: pyinstaller --onefile --name VibeGuard ${{ matrix.iconarg }} packaging/vibeguard_app.py
+        shell: bash
+        run: pyinstaller --onefile --name VibeGuard ${{ matrix.extra }} packaging/vibeguard_app.py
       - name: Rename asset
         shell: bash
         run: |
