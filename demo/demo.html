@@ -11,9 +11,11 @@
     --sans:'Malgun Gothic','맑은 고딕',system-ui,-apple-system,'Segoe UI',sans-serif}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans)}
-  #app{height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  #stage{width:min(96vw,1040px);aspect-ratio:16/9;background:var(--bg);position:relative;
-    border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  #app{height:100vh;display:grid;place-items:center;overflow:hidden}
+  /* 고정 설계 크기(16:9)를 JS 로 화면에 맞춰 확대 — 어떤 해상도에서도 비율·글자 크기가 함께 커진다 */
+  #stage{width:1040px;height:585px;background:var(--bg);position:relative;
+    border:1px solid var(--line);border-radius:18px;overflow:hidden;transform-origin:center center}
+  body.playing{cursor:none}
   .scene{position:absolute;inset:0;padding:46px 52px;opacity:0;transition:opacity .6s ease;
     display:flex;flex-direction:column;justify-content:center}
   .scene.on{opacity:1}
@@ -42,6 +44,7 @@
   .rid{font-family:var(--mono);font-size:13px;color:var(--muted);background:var(--surf2);
     border:1px solid var(--line);padding:1px 7px;border-radius:6px}
   .slopt{font-size:12px;font-weight:700;color:#2a1a4a;background:var(--slop);padding:2px 8px;border-radius:6px}
+  .cvet{font-size:12px;font-weight:700;color:#0B0B0F;background:var(--green);padding:2px 8px;border-radius:6px}
   .csnip{font-family:var(--mono);font-size:14px;color:var(--muted);margin-top:7px}
   .score{display:flex;align-items:center;gap:28px}
   .ring{width:150px;height:150px;border-radius:50%;border:10px solid var(--crit);display:grid;
@@ -59,17 +62,30 @@
   .winbar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#17181D;border-bottom:1px solid var(--line)}
   .wd{width:11px;height:11px;border-radius:50%}.wd.r{background:#FF5F57}.wd.y{background:#FEBC2E}.wd.g{background:#28C840}
   .addr{margin-left:8px;font-family:var(--mono);font-size:13px;color:var(--muted);background:#0E0F13;border:1px solid var(--line);border-radius:6px;padding:3px 12px}
-  .shot{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;background:#0B0B0F}
+  .shot{display:block;width:100%;height:auto;max-height:340px;object-fit:contain;background:#0B0B0F}
   #caption{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);
     padding:16px 24px;font-size:21px;line-height:1.5;min-height:64px;display:flex;align-items:center;
     border-top:1px solid var(--line)}
-  #bar{position:absolute;left:0;top:0;height:4px;background:var(--green);width:0}
-  #start{position:absolute;inset:0;background:rgba(11,11,15,.92);display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:18px;z-index:9;cursor:pointer}
+  #bar{position:absolute;left:0;top:0;height:4px;background:var(--green);width:0;z-index:5}
+  #start{position:absolute;inset:0;background:rgba(11,11,15,.94);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:16px;z-index:9;cursor:pointer;padding:30px}
   #start .b{font-size:26px;font-weight:700}
-  #start .s{color:var(--muted);font-size:16px;text-align:center;line-height:1.6}
-  #start .play{width:88px;height:88px;border-radius:50%;background:var(--green);color:#062012;
-    display:grid;place-items:center;font-size:34px;font-weight:800}
+  #start .play{width:78px;height:78px;border-radius:50%;background:var(--green);color:#062012;
+    display:grid;place-items:center;font-size:30px;font-weight:800}
+  .checklist{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:16px 22px;
+    font-size:15px;color:var(--muted);line-height:1.9;text-align:left;min-width:430px}
+  .checklist b{color:var(--text)}
+  .checklist .n{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--surf2);
+    border:1px solid var(--line);color:var(--green);font-size:12px;font-weight:700;text-align:center;
+    line-height:19px;margin-right:8px}
+  #voicechk{font-size:14px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);
+    background:var(--surf2);display:inline-flex;align-items:center;gap:8px}
+  #voicetest{cursor:pointer;border:1px solid var(--green);background:transparent;color:var(--green);
+    font-family:inherit;font-size:13px;font-weight:700;border-radius:999px;padding:5px 13px}
+  #cd{font-size:150px;font-weight:800;color:var(--green);line-height:1}
+  #done{position:absolute;right:14px;bottom:78px;font-size:13px;color:var(--muted);
+    background:rgba(0,0,0,.6);border:1px solid var(--line);border-radius:999px;padding:6px 14px;
+    opacity:0;transition:opacity .6s;z-index:6}
 </style>
 </head>
 <body>
@@ -78,20 +94,28 @@
     <div id="bar"></div>
     <div id="scene" class="scene"></div>
     <div id="caption"></div>
+    <div id="done">재생 완료 — 이제 녹화를 멈추세요 (Win+Alt+R)</div>
     <div id="start">
       <div class="play">▶</div>
       <div class="b">VibeGuard 자동 데모</div>
-      <div class="s">클릭하면 약 2분간 자동으로 재생됩니다.<br>전체화면(F11) 후 화면 녹화를 켜고 클릭하세요. 끝나면 그대로 시연영상이 됩니다.</div>
+      <div id="voicechk">음성 확인 중…</div>
+      <div class="checklist">
+        <div><span class="n">1</span><b>F11</b> 로 전체화면</div>
+        <div><span class="n">2</span>위 <b>음성 테스트</b> 로 소리 확인</div>
+        <div><span class="n">3</span><b>Win + Alt + R</b> 로 화면 녹화 시작</div>
+        <div><span class="n">4</span>여기를 <b>클릭</b>(또는 스페이스) → 3초 뒤 자동 재생</div>
+      </div>
     </div>
   </div>
 </div>
 <script>
 var SHIELD='<svg width="38" height="38" viewBox="0 0 1024 1024"><path d="M300 256 Q284 256 284 272 L284 528 C284 612 372 700 512 786 C652 700 740 612 740 528 L740 272 Q740 256 724 256 Z" fill="#fff"/><path d="M430 508 L492 566 L612 438" fill="none" stroke="#29D17F" stroke-width="62" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-function card(sev,col,title,rid,snip,slop){
+function card(sev,col,title,rid,snip,tag){
   return '<div class="card" data-card style="border-left-color:'+col+'">'
     +'<div class="h"><span class="badge" style="background:'+col+'">'+sev+'</span>'
     +'<span class="ttl">'+title+'</span><span class="rid">'+rid+'</span>'
-    +(slop?'<span class="slopt">공급망/슬롭스쿼팅</span>':'')+'</div>'
+    +(tag==='slop'?'<span class="slopt">공급망/슬롭스쿼팅</span>':'')
+    +(tag==='cve'?'<span class="cvet">알려진 취약점(CVE)</span>':'')+'</div>'
     +'<div class="csnip">'+snip+'</div></div>';
 }
 var SCENES=[
@@ -119,14 +143,14 @@ var SCENES=[
  {dur:11000,cap:"가장 특징적인 기능입니다. AI가 지어낸 가짜 패키지(슬롭스쿼팅)까지 잡아 공급망 공격을 막습니다.",
   reveal:true,
   html:'<div class="kicker">차별점 — 슬롭스쿼팅</div><div class="cards">'
-   +card('중간','var(--med)',"'reqeusts' — 유명 패키지 'requests'의 오타·환각",'VG-SLOP','requirements.txt:1  reqeusts',true)
-   +card('중간','var(--med)',"'expres' — 'express'와 한 글자 차이",'VG-SLOP','package.json  "expres"',true)
+   +card('중간','var(--med)',"'reqeusts' — 유명 패키지 'requests'의 오타·환각",'VG-SLOP','requirements.txt:1  reqeusts','slop')
+   +card('중간','var(--med)',"'expres' — 'express'와 한 글자 차이",'VG-SLOP','package.json  "expres"','slop')
    +'</div><div class="sub" style="font-size:17px">공격자가 이런 이름을 미리 선점해 악성코드를 심습니다. 일반 도구는 놓치는 위협입니다.</div>'},
  {dur:11000,cap:"여기에 더해, 쓰고 있는 라이브러리의 알려진 취약점(CVE)도 실시간으로 확인합니다. 어제 공개된 취약점도 도구를 업데이트하지 않고 바로 반영됩니다.",
   reveal:true,
   html:'<div class="kicker">항상 최신 — 알려진 취약점(CVE)</div><div class="cards">'
-   +card('높음','var(--high)','requests 2.5.0 — 인증정보 유출(CVE-2018-18074)','VG-CVE','requirements.txt:1  → 2.20.0 이상으로 업그레이드')
-   +card('중간','var(--med)','requests 2.5.0 — 최신 취약점 CVE-2026-25645','VG-CVE','requirements.txt:1  OSV.dev 실시간 조회')
+   +card('높음','var(--high)','requests 2.5.0 — 인증정보 유출(CVE-2018-18074)','VG-CVE','requirements.txt:1  → 2.20.0 이상으로 업그레이드','cve')
+   +card('중간','var(--med)','requests 2.5.0 — 최신 취약점 CVE-2026-25645','VG-CVE','requirements.txt:1  OSV.dev 실시간 조회','cve')
    +'</div><div class="sub" style="font-size:17px">취약점 목록을 도구에 내장하지 않고 OSV.dev에 물어봐, 항상 최신 상태로 점검합니다.</div>'},
  {dur:9000,cap:"모든 결과는 0부터 100까지 보안 점수로 요약됩니다. 이 앱은 0점, F등급이네요.",
   html:'<div class="kicker">한눈에</div><div class="score"><div class="ring"><div class="n">0</div></div>'
@@ -146,22 +170,73 @@ var SCENES=[
    +'<div class="sub">github.com/nohseongmin/VibeGuard · 오픈소스(MIT)</div>'},
 ];
 var stage=document.getElementById('scene'),cap=document.getElementById('caption'),bar=document.getElementById('bar');
+var startOv=document.getElementById('start'),doneTip=document.getElementById('done');
 var SPEED=1.25;                       // 1.25배속
-var synth=window.speechSynthesis,koVoice=null;
-function pickVoice(){try{var v=synth.getVoices();koVoice=v.filter(function(x){return /^ko/i.test(x.lang||"")})[0]||null;}catch(e){}}
-if(synth){pickVoice();synth.onvoiceschanged=pickVoice;}
-var i=-1,total=SCENES.reduce(function(a,s){return a+s.dur/SPEED},0),elapsed=0;
+var synth=window.speechSynthesis,koVoice=null,started=false;
+
+// 설계 크기(1040x585)를 화면에 맞춰 확대 — 1080p 전체화면에서 거의 꽉 차게 재생된다
+function fit(){
+  var d=document.documentElement;
+  var w=innerWidth||d.clientWidth, h=innerHeight||d.clientHeight;
+  var k=Math.min(w*0.97/1040, h*0.97/585);
+  if(!isFinite(k)||k<=0) k=1;      // 크기를 못 읽는 상황에서도 화면이 사라지지 않게
+  document.getElementById('stage').style.transform='scale('+k+')';
+}
+addEventListener('resize',fit);
+addEventListener('load',fit);
+addEventListener('fullscreenchange',fit);   // F11 전체화면 전환 직후 다시 맞춤
+fit();
+
+// 녹화 전 점검: 한국어 음성이 없으면 해설이 어색하거나 무음이 되므로 미리 알려준다
+function pickVoice(){
+  try{
+    var v=synth.getVoices();
+    koVoice=v.filter(function(x){return /^ko/i.test(x.lang||"")})[0]||null;
+  }catch(e){}
+  var box=document.getElementById('voicechk');
+  if(!box) return;
+  if(!synth){
+    box.innerHTML='⚠️ 이 브라우저는 음성 해설을 지원하지 않습니다 — 자막으로 진행됩니다';
+  }else if(koVoice){
+    box.innerHTML='✅ 한국어 음성 준비됨 ('+koVoice.name+') &nbsp;<button id="voicetest">🔊 음성 테스트</button>';
+  }else{
+    box.innerHTML='⚠️ 한국어 음성 없음 — 해설이 어색할 수 있습니다 (설정 › 시간 및 언어 › 음성)'
+      +' &nbsp;<button id="voicetest">🔊 음성 테스트</button>';
+  }
+  var btn=document.getElementById('voicetest');
+  if(btn) btn.addEventListener('click',function(ev){
+    ev.stopPropagation();                       // 테스트 버튼 클릭으로 재생이 시작되지 않도록
+    try{
+      synth.cancel();
+      var u=new SpeechSynthesisUtterance('음성 테스트입니다. 이 소리가 들리면 녹화를 시작하세요.');
+      u.lang='ko-KR'; if(koVoice)u.voice=koVoice;
+      synth.speak(u);
+    }catch(e){}
+  });
+}
+if(synth){pickVoice();synth.onvoiceschanged=pickVoice;}else{pickVoice();}
+
+var i=-1;
 function next(){
   i++;
-  if(i>=SCENES.length){stage.classList.remove('on');cap.textContent="";bar.style.width="100%";if(synth)try{synth.cancel()}catch(e){}return;}
+  if(i>=SCENES.length){                          // 마지막 장면을 그대로 유지(검은 화면으로 끝나지 않게)
+    bar.style.width="100%";
+    if(synth)try{synth.cancel()}catch(e){}
+    document.title='■ 재생 완료 — 녹화를 멈추세요';
+    setTimeout(function(){doneTip.style.opacity=1;},5000);
+    return;
+  }
   var s=SCENES[i];
   stage.classList.remove('on');
   setTimeout(function(){
     stage.innerHTML=s.html; cap.textContent=s.cap; stage.classList.add('on');
     if(s.reveal){var cs=stage.querySelectorAll('[data-card]');cs.forEach(function(c,k){setTimeout(function(){c.classList.add('show')},400+k*800)});}
-    var seg=s.dur/SPEED, start=elapsed, t0=Date.now();
-    var iv=setInterval(function(){var p=(start+Math.min(seg,Date.now()-t0))/total;bar.style.width=Math.min(100,p*100)+"%"},70);
-    elapsed+=seg;
+    // 진행바는 '장면 번호 + 장면 내 진행률' 기준이라 실제 해설 길이와 어긋나지 않는다
+    var seg=s.dur/SPEED, t0=Date.now();
+    var iv=setInterval(function(){
+      var p=(i+Math.min(1,(Date.now()-t0)/seg))/SCENES.length;
+      bar.style.width=Math.min(100,p*100)+"%";
+    },70);
     var done=false;function go(){if(done)return;done=true;clearInterval(iv);next();}
     if(synth&&s.cap){                 // 한국어 음성 해설(TTS)이 타이밍을 주도
       try{synth.cancel()}catch(e){}
@@ -173,7 +248,28 @@ function next(){
     }else{setTimeout(go,seg);}
   },450);
 }
-document.getElementById('start').addEventListener('click',function(){this.style.display='none';if(synth)try{synth.resume()}catch(e){}next();});
+
+// 3-2-1 카운트다운 — 클릭한 마우스를 치울 시간을 주고, 영상 도입부를 깔끔하게 만든다
+function begin(){
+  if(started)return; started=true;
+  document.body.classList.add('playing');
+  if(synth)try{                                  // 사용자 제스처 안에서 TTS 를 깨워 둔다
+    synth.resume();
+    var prime=new SpeechSynthesisUtterance(' ');prime.volume=0;synth.speak(prime);
+  }catch(e){}
+  startOv.innerHTML='<div id="cd">3</div>';
+  var n=3;
+  var t=setInterval(function(){
+    n--;
+    if(n<=0){clearInterval(t);startOv.style.display='none';next();return;}
+    document.getElementById('cd').textContent=n;
+  },800);
+}
+startOv.addEventListener('click',begin);
+addEventListener('keydown',function(e){
+  if(!started&&(e.code==='Space'||e.code==='Enter')){e.preventDefault();begin();}
+  if(e.key==='r'||e.key==='R'){location.reload();}   // R: 처음부터 다시(재녹화용)
+});
 </script>
 </body>
 </html>
