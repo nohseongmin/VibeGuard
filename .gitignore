@@ -14,3 +14,14 @@ env/
 .idea/
 .vscode/
 *.spec
+
+# 대회 제출용·내부 작업 문서 (공개 저장소에 두지 않음 — 개인정보 포함)
+보고서/
+2026 오픈소스 개발자대회 결과보고서*.docx
+2026 오픈소스 개발자대회 결과보고서*.pdf
+
+# 로컬 작업 부산물
+*.log
+*.tmp
+report.html
+vibeguard_report.html

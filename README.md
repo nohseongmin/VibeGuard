@@ -108,6 +108,7 @@ vibeguard gui                     브라우저 기반 GUI 실행(로컬 서버)
 
 - `vibeguard app` — 네이티브 창(tkinter). 실행파일을 더블클릭했을 때 열리는 화면이며, 폴더를 창에 끌어다 놓으면 바로 검사합니다.
 - `vibeguard gui` — 로컬 웹 GUI(http.server). 브라우저로 보고 싶거나 원격 접속이 필요할 때 씁니다.
+- Python 은 있는데 명령어를 치기 싫다면 `VibeGuard-GUI.bat`(Windows) / `VibeGuard-GUI.command`(macOS) 를 더블클릭해도 웹 GUI 가 열립니다.
 
 ```
 vibeguard app            # 데스크톱 앱 창 열기(폴더를 창에 끌어다 놓으면 검사)
