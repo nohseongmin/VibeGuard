@@ -11,7 +11,7 @@ import html
 import json
 import os
 import sys
-from typing import List
+from typing import List, Optional
 
 from .finding import Finding, Severity
 from .scanner import ScanResult
@@ -39,7 +39,7 @@ def _supports_color() -> bool:
 
 
 class TerminalReporter:
-    def __init__(self, use_color: bool = None):
+    def __init__(self, use_color: Optional[bool] = None):
         self.color = _supports_color() if use_color is None else use_color
 
     def _c(self, text: str, code: str) -> str:
