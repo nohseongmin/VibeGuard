@@ -73,6 +73,19 @@ class _Handler(BaseHTTPRequestHandler):
         self._send(code, json.dumps(obj, ensure_ascii=False).encode("utf-8"),
                    "application/json; charset=utf-8")
 
+    def _is_same_origin(self) -> bool:
+        """CSRF 방어: 브라우저가 보낸 Origin 헤더가 있다면 이 서버 자신과 일치하는지 확인.
+
+        악성 페이지가 열려 있는 상태에서 fetch("http://127.0.0.1:PORT/api/scan?path=...")
+        로 로컬 파일을 스캔/열람시키는 것을 막는다. Origin 헤더는 스크립트가 위조할 수
+        없으므로 신뢰할 수 있다.
+        """
+        origin = self.headers.get("Origin")
+        if not origin:
+            return True
+        host = self.headers.get("Host", "")
+        return origin in (f"http://{host}", f"https://{host}")
+
     def do_GET(self):  # noqa: N802
         parsed = urlparse(self.path)
         route = parsed.path
@@ -80,6 +93,9 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(200, INDEX_HTML.encode("utf-8"), "text/html; charset=utf-8")
             return
         if route == "/api/scan":
+            if not self._is_same_origin():
+                self._send_json(403, {"error": "허용되지 않은 요청 출처(Origin)입니다."})
+                return
             q = parse_qs(parsed.query)
             path = (q.get("path", ["."])[0] or ".").strip()
             offline = q.get("offline", ["0"])[0] in ("1", "true", "on")
