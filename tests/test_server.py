@@ -61,6 +61,22 @@ def test_http_api_scan_returns_findings():
         httpd.server_close()
 
 
+def test_http_api_scan_rejects_cross_origin():
+    httpd, port = _start_server()
+    try:
+        q = urllib.parse.urlencode({"path": DEMO, "offline": "1"})
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/scan?{q}")
+        req.add_header("Origin", "http://evil.example")
+        try:
+            urllib.request.urlopen(req)
+            assert False, "다른 Origin 의 요청은 403 이어야 함"
+        except urllib.error.HTTPError as e:
+            assert e.code == 403
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+
+
 def test_http_bad_path_returns_400():
     httpd, port = _start_server()
     try:
