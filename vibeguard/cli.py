@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from typing import List
 
@@ -36,6 +37,10 @@ def _ensure_utf8_output() -> None:
 
 
 def _run_scan(args) -> int:
+    if not os.path.exists(args.path):
+        print(f"경로를 찾을 수 없습니다: {args.path}", file=sys.stderr)
+        return 1
+
     scanner = Scanner()
     if getattr(args, "diff", None):
         from .gitdiff import changed_files
