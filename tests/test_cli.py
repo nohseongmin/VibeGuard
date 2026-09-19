@@ -21,3 +21,13 @@ def test_scan_existing_empty_path_succeeds(tmp_path, capsys):
     code = args.func(args)
     assert code == 0
     assert "스캔한 파일: 0개" in capsys.readouterr().out
+
+
+def test_scan_missing_baseline_fails_loudly(tmp_path, capsys):
+    missing = str(tmp_path / "no-such-baseline.json")
+    args = build_parser().parse_args(
+        ["scan", str(tmp_path), "--no-deps", "--baseline", missing]
+    )
+    code = args.func(args)
+    assert code == 1
+    assert missing in capsys.readouterr().err

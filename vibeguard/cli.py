@@ -85,6 +85,9 @@ def _run_scan(args) -> int:
     if getattr(args, "baseline", None):
         from .baseline import filter_new, load_fingerprints
 
+        if not os.path.exists(args.baseline):
+            print(f"베이스라인 파일을 찾을 수 없습니다: {args.baseline}", file=sys.stderr)
+            return 1
         known = load_fingerprints(args.baseline)
         result.findings = filter_new(result.findings, known)
 
