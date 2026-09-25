@@ -88,7 +88,11 @@ def _run_scan(args) -> int:
         if not os.path.exists(args.baseline):
             print(f"베이스라인 파일을 찾을 수 없습니다: {args.baseline}", file=sys.stderr)
             return 1
-        known = load_fingerprints(args.baseline)
+        try:
+            known = load_fingerprints(args.baseline)
+        except (OSError, ValueError):
+            print("베이스라인 파일을 읽을 수 없습니다. 파일 접근 권한과 JSON 형식을 확인하세요.", file=sys.stderr)
+            return 1
         result.findings = filter_new(result.findings, known)
 
     # 최소 심각도 필터 (CLI > 설정 파일)
