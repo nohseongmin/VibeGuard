@@ -30,7 +30,11 @@ def load_fingerprints(path: str) -> Set[str]:
     """베이스라인 파일에서 지문 집합을 읽어온다."""
     with open(path, "r", encoding="utf-8") as fh:
         data = json.load(fh)
-    return set(data.get("fingerprints", []))
+    if not isinstance(data, dict) or not isinstance(data.get("fingerprints"), list):
+        raise ValueError("베이스라인에는 fingerprints 목록이 필요합니다.")
+    if not all(isinstance(fingerprint, str) for fingerprint in data["fingerprints"]):
+        raise ValueError("베이스라인 지문은 문자열이어야 합니다.")
+    return set(data["fingerprints"])
 
 
 def filter_new(findings: List[Finding], known: Set[str]) -> List[Finding]:
