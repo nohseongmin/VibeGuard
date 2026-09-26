@@ -56,7 +56,7 @@ def test_parse_package_json():
 
 def test_offline_typosquat_finding(tmp_path):
     # 오프라인 모드: 레지스트리 조회 없이 오타 휴리스틱만 동작해야 함
-    (tmp_path / "app.py").write_text("import reqeusts\n", encoding="utf-8")
+    (tmp_path / "app.py").write_text("import os, reqeusts\n", encoding="utf-8")
     findings = ss.check_project(str(tmp_path), offline=True)
     ids = {f.rule_id for f in findings}
     assert "VG-SLOP-002" in ids  # 오타스쿼팅 후보
