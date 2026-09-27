@@ -79,7 +79,7 @@ _POPULAR_NPM = {
 # ---------------------------------------------------------------------------
 # import / 의존성 추출
 # ---------------------------------------------------------------------------
-_PY_IMPORT_RE = re.compile(r"^\s*(?:from\s+([a-zA-Z0-9_]+)|import\s+([a-zA-Z0-9_]+))", re.M)
+_PY_IMPORT_RE = re.compile(r"^\s*(?:from\s+([a-zA-Z0-9_]+)|import\s+([a-zA-Z0-9_., \t]+))", re.M)
 _JS_IMPORT_RE = re.compile(
     r"""(?:import\s+(?:[^'"]+\s+from\s+)?|require\s*\(\s*)['"]([^'"]+)['"]"""
 )
@@ -98,9 +98,12 @@ def _top_pkg_js(spec: str) -> Optional[str]:
 def extract_python_imports(text: str) -> Set[str]:
     names: Set[str] = set()
     for m in _PY_IMPORT_RE.finditer(text):
-        name = m.group(1) or m.group(2)
-        if name:
-            names.add(name.split(".")[0])
+        imports = [m.group(1)] if m.group(1) else m.group(2).split(",")
+        names.update(
+            name.strip().split()[0].split(".")[0]
+            for name in imports
+            if name.strip()
+        )
     return names
 
 
