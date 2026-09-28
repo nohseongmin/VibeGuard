@@ -48,3 +48,10 @@ def test_cli_flag_overrides_config(tmp_path, capsys):
     _write(tmp_path, ".vibeguard.json", "{}")
     _, d = _scan_json(tmp_path, capsys)
     assert any(f["rule_id"] == "VG-WEB-009" for f in d["findings"])
+
+
+def test_invalid_severity_config_falls_back_to_defaults(tmp_path, capsys):
+    _write(tmp_path, ".vibeguard.json", '{"min_severity": "urgent", "fail_on": 42}')
+    code, data = _scan_json(tmp_path, capsys)
+    assert code == 0
+    assert data["findings"] == []
