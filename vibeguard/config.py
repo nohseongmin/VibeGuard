@@ -19,6 +19,7 @@ import os
 from typing import Optional
 
 CONFIG_NAME = ".vibeguard.json"
+_SEVERITIES = frozenset({"info", "low", "medium", "high", "critical"})
 
 
 def find_config(path: str) -> Optional[str]:
@@ -47,4 +48,12 @@ def load_config(path: str) -> dict:
             data = json.load(fh)
     except (OSError, ValueError):
         return {}
-    return data if isinstance(data, dict) else {}
+    if not isinstance(data, dict):
+        return {}
+    for key in ("min_severity", "fail_on"):
+        value = data.get(key)
+        if value is not None and (
+            not isinstance(value, str) or value.strip().lower() not in _SEVERITIES
+        ):
+            data.pop(key)
+    return data
