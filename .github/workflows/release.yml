@@ -43,7 +43,11 @@ jobs:
         run: python -c "import os, vibeguard; assert os.environ['RELEASE_TAG'] == 'v' + vibeguard.__version__"
       - name: Build single-file executable
         shell: bash
-        run: pyinstaller --onefile --name VibeGuard ${{ matrix.extra }} packaging/vibeguard_app.py
+        run: pyinstaller --onefile --paths . --name VibeGuard ${{ matrix.extra }} packaging/vibeguard_app.py
+      - name: Verify packaged application and Tk
+        env:
+          BUILT_ASSET: ${{ matrix.src }}
+        run: python -c "import os; from PyInstaller.archive.readers import CArchiveReader; a=CArchiveReader(os.environ['BUILT_ASSET']); p=a.open_embedded_archive('PYZ.pyz'); assert 'vibeguard.app' in p.toc; assert 'tkinter' in p.toc; assert any(n.startswith('_tkinter.') for n in a.toc)"
       - name: Rename asset and checksum
         shell: bash
         run: |

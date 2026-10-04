@@ -6,5 +6,5 @@ AI 코딩 어시스턴트(Cursor, Claude Code, Copilot, v0, Bolt 등)가 생성�
 설명·수정 가이드를 제공하는 오픈소스 도구.
 """
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __all__ = ["__version__"]
