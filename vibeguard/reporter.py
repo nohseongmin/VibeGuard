@@ -53,12 +53,13 @@ class TerminalReporter:
         out.append("")
         out.append(self._c("  VibeGuard  ", "\033[1;30;47m") + " 바이브코딩 보안 점검 결과")
         out.append("")
-
+        sc, gr, vd = _score.summary(result)
+        for warning in result.warnings:
+            out.append(f"  검사 경고: {warning}")
         if not findings:
-            out.append(self._c("  문제를 발견하지 못했습니다. ", "\033[32m"))
             out.append(f"  스캔한 파일: {result.files_scanned}개")
-            sc, gr, vd = _score.summary(findings)
-            out.append(f"  보안 점수: {sc}/100 (등급 {gr})  {vd}")
+            out.append(f"  미완료 파일/폴더: {result.files_skipped}개")
+            out.append(f"  보안 점수: {sc if sc is not None else '—'}/100 (등급 {gr})  {vd}")
             out.append("")
             return "\n".join(out)
 
@@ -75,7 +76,6 @@ class TerminalReporter:
 
         # 요약
         counts = result.by_severity()
-        sc, gr, vd = _score.summary(findings)
         out.append(self._c("  요약", _BOLD))
         out.append(
             "   "
@@ -86,14 +86,17 @@ class TerminalReporter:
             )
         )
         out.append(f"   스캔한 파일: {result.files_scanned}개, 발견: {len(findings)}건")
+        out.append(f"   미완료 파일/폴더: {result.files_skipped}개")
         bar = _score_bar(sc)
-        out.append(f"   보안 점수: {sc}/100 (등급 {gr})  {bar}")
+        out.append(f"   보안 점수: {sc if sc is not None else '—'}/100 (등급 {gr})  {bar}")
         out.append(f"   {vd}")
         out.append("")
         return "\n".join(out)
 
 
-def _score_bar(score: int, width: int = 20) -> str:
+def _score_bar(score: Optional[int], width: int = 20) -> str:
+    if score is None:
+        return ""
     filled = round(score / 100 * width)
     return "[" + "#" * filled + "-" * (width - filled) + "]"
 
@@ -101,13 +104,15 @@ def _score_bar(score: int, width: int = 20) -> str:
 class JsonReporter:
     def render(self, result: ScanResult) -> str:
         findings = result.sorted_findings()
-        sc, gr, vd = _score.summary(findings)
+        sc, gr, vd = _score.summary(result)
         payload = {
             "tool": "vibeguard",
             "score": sc,
             "grade": gr,
             "verdict": vd,
             "files_scanned": result.files_scanned,
+            "files_skipped": result.files_skipped,
+            "warnings": result.warnings,
             "summary": {s.name: c for s, c in result.by_severity().items()},
             "findings": [f.to_dict() for f in findings],
         }
@@ -119,16 +124,18 @@ class MarkdownReporter:
 
     def render(self, result: ScanResult) -> str:
         findings = result.sorted_findings()
-        sc, gr, vd = _score.summary(findings)
+        sc, gr, vd = _score.summary(result)
         lines: List[str] = []
         lines.append("# VibeGuard 보안 점검 리포트")
         lines.append("")
-        lines.append(f"- 보안 점수: {sc}/100 (등급 {gr})")
+        lines.append(f"- 보안 점수: {sc if sc is not None else '—'}/100 (등급 {gr})")
         lines.append(f"- 총평: {vd}")
         lines.append(f"- 스캔한 파일: {result.files_scanned}개, 발견: {len(findings)}건")
+        lines.append(f"- 미완료 파일/폴더: {result.files_skipped}개")
+        lines.extend(f"- 검사 경고: {warning}" for warning in result.warnings)
         lines.append("")
         if not findings:
-            lines.append("발견된 문제가 없습니다.")
+            lines.append("검사 범위에서 발견된 항목이 없습니다." if sc is not None else vd)
             return "\n".join(lines)
         lines.append("| 심각도 | 규칙 | 위치 | 제목 |")
         lines.append("| --- | --- | --- | --- |")
@@ -242,6 +249,18 @@ class SarifReporter:
                         }
                     },
                     "results": results,
+                    "invocations": [{
+                        "executionSuccessful": bool(result.files_scanned) and not result.files_skipped,
+                        "toolExecutionNotifications": [
+                            {"level": "warning", "message": {"text": warning}}
+                            for warning in result.warnings
+                        ] or ([{"level": "warning", "message": {"text": "검사한 코드 파일이 없습니다."}}]
+                              if not result.files_scanned else []),
+                        "properties": {
+                            "files_scanned": result.files_scanned,
+                            "files_skipped": result.files_skipped,
+                        },
+                    }],
                 }
             ],
         }
@@ -258,6 +277,8 @@ _SEV_COLOR = {
 
 
 def _grade_color(grade: str) -> str:
+    if grade in ("미검사", "불완전"):
+        return "#8A8F99"
     if grade in ("A", "B"):
         return "#29D17F"
     if grade in ("C", "D"):
@@ -306,7 +327,7 @@ class HtmlReporter:
 
     def render(self, result: ScanResult) -> str:
         findings = result.sorted_findings()
-        sc, gr, vd = _score.summary(findings)
+        sc, gr, vd = _score.summary(result)
         counts = result.by_severity()
         esc = html.escape
         gc = _grade_color(gr)
@@ -323,10 +344,13 @@ class HtmlReporter:
             "</div></header>"
         )
         p.append('<section class="summary">')
-        p.append(f'<div class="ring" style="border-color:{gc}"><div class="score">{sc}</div><div class="of">/100</div></div>')
+        p.append(f'<div class="ring" style="border-color:{gc}"><div class="score">{sc if sc is not None else "—"}</div><div class="of">/100</div></div>')
         p.append('<div class="sumtext">')
         p.append(f'<span class="grade" style="background:{gc}">등급 {esc(gr)}</span>')
         p.append(f'<div class="verdict">{esc(vd)}</div>')
+        p.append(f'<div class="sub">미완료 파일/폴더 {result.files_skipped}개</div>')
+        for warning in result.warnings:
+            p.append(f'<div class="sub">검사 경고: {esc(warning)}</div>')
         p.append('<div class="chips">')
         for s in (Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO):
             p.append(
@@ -335,7 +359,8 @@ class HtmlReporter:
             )
         p.append("</div></div></section>")
         if not findings:
-            p.append('<div class="empty">발견된 문제가 없습니다. 안전합니다!</div>')
+            message = "검사 범위에서 발견된 항목이 없습니다." if sc is not None else vd
+            p.append(f'<div class="empty">{esc(message)}</div>')
         else:
             p.append('<section class="cards">')
             for f in findings:

@@ -36,7 +36,7 @@ def build_scan_payload(
         result.findings.extend(dep_findings)
 
     findings = result.sorted_findings()
-    score, grade, verdict = score_summary(findings)
+    score, grade, verdict = score_summary(result)
     counts = {sev.name: 0 for sev in Severity}
     for f in findings:
         counts[f.severity.name] += 1
@@ -47,6 +47,8 @@ def build_scan_payload(
         "grade": grade,
         "verdict": verdict,
         "files_scanned": result.files_scanned,
+        "files_skipped": result.files_skipped,
+        "warnings": result.warnings,
         "total": len(findings),
         "counts": counts,
         "findings": [f.to_dict() for f in findings],
@@ -257,6 +259,7 @@ INDEX_HTML = r"""<!DOCTYPE html>
   const $ = (id)=>document.getElementById(id);
 
   function gradeColor(g){
+    if(g==="미검사"||g==="불완전") return "var(--muted)";
     if(g==="A"||g==="B") return "var(--accent)";
     if(g==="C"||g==="D") return "var(--med)";
     return "var(--crit)";
@@ -292,14 +295,15 @@ INDEX_HTML = r"""<!DOCTYPE html>
   function render(){
     const d = DATA;
     $("summary").style.display = "flex";
-    $("scoreNum").textContent = d.score;
-    $("ring").style.setProperty("--pct", d.score);
+    $("scoreNum").textContent = d.score === null ? "—" : d.score;
+    $("ring").style.setProperty("--pct", d.score === null ? 0 : d.score);
     $("ring").style.setProperty("--gradeColor", gradeColor(d.grade));
     const gb = $("gradeBadge");
     gb.textContent = "등급 " + d.grade;
     gb.style.background = gradeColor(d.grade);
     $("verdict").textContent = d.verdict;
-    $("meta").textContent = "스캔 경로: " + d.path + "  ·  파일 " + d.files_scanned + "개  ·  발견 " + d.total + "건";
+    $("meta").textContent = "스캔 경로: " + d.path + "  ·  파일 " + d.files_scanned + "개  ·  미완료 " + d.files_skipped + "개  ·  발견 " + d.total + "건";
+    $("status").textContent = (d.warnings || []).join("\n");
 
     const chips = $("chips"); chips.innerHTML = "";
     ORDER.forEach(s=>{
@@ -316,7 +320,10 @@ INDEX_HTML = r"""<!DOCTYPE html>
     const wrap = $("cards"); wrap.innerHTML = "";
     const shown = d.findings.filter(f=>!hidden.has(f.severity));
     if(d.total === 0){
-      wrap.innerHTML = '<div class="empty"><div class="big">✅</div>발견된 문제가 없습니다. 안전합니다!</div>';
+      const message = document.createElement("div");
+      message.className = "empty";
+      message.textContent = d.score === null ? d.verdict : "검사 범위에서 발견된 항목이 없습니다.";
+      wrap.appendChild(message);
       return;
     }
     if(shown.length === 0){

@@ -48,8 +48,13 @@ def _run_scan(args) -> int:
         base = None if args.diff == "HEAD" else args.diff
         result = ScanResult()
         for fp in changed_files(args.path, base):
-            result.findings.extend(scanner.scan_file(fp))
-            result.files_scanned += 1
+            if os.path.splitext(fp)[1].lower() not in scanner.include_ext and not os.path.basename(fp).lower().startswith(".env"):
+                continue
+            file_result = scanner.scan(fp)
+            result.findings.extend(file_result.findings)
+            result.files_scanned += file_result.files_scanned
+            result.files_skipped += file_result.files_skipped
+            result.warnings.extend(file_result.warnings)
     else:
         result = scanner.scan(args.path)
 
@@ -77,6 +82,11 @@ def _run_scan(args) -> int:
     if getattr(args, "write_baseline", None):
         from .baseline import write_baseline
 
+        if not result.files_scanned or result.files_skipped:
+            print("검사를 완료하지 못해 베이스라인을 저장하지 않았습니다.", file=sys.stderr)
+            for warning in result.warnings:
+                print(warning, file=sys.stderr)
+            return 2
         n = write_baseline(args.write_baseline, result.findings)
         print(f"베이스라인을 저장했습니다: {args.write_baseline} ({n}건)")
         return 0
@@ -118,6 +128,8 @@ def _run_scan(args) -> int:
     # 종료 코드 결정 (CLI > 설정 파일)
     fail_on = args.fail_on or cfg.get("fail_on")
     if fail_on:
+        if not result.files_scanned or result.files_skipped:
+            return 2
         threshold = Severity.from_name(fail_on)
         if any(f.severity >= threshold for f in result.findings):
             return 1

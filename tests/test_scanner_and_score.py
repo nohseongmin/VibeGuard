@@ -3,10 +3,13 @@
 import json
 import os
 import sys
+from unittest.mock import patch
+
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from vibeguard.scanner import Scanner  # noqa: E402
+from vibeguard.scanner import MAX_FILE_BYTES, MAX_LINE_LEN, ScanResult, Scanner  # noqa: E402
 from vibeguard.finding import Finding, Severity  # noqa: E402
 from vibeguard import score as sc  # noqa: E402
 from vibeguard.reporter import JsonReporter, MarkdownReporter, TerminalReporter  # noqa: E402
@@ -78,3 +81,80 @@ def test_terminal_reporter_no_color_has_no_ansi(tmp_path):
     result = Scanner().scan(str(tmp_path))
     out = TerminalReporter(use_color=False).render(result)
     assert "\033[" not in out  # 색상 코드 없음
+
+
+@pytest.mark.parametrize("name", [None, "app.html"])
+def test_no_supported_code_is_unrated_across_reporters(tmp_path, name):
+    from vibeguard.reporter import get_reporter
+    from vibeguard.server import build_scan_payload
+
+    if name:
+        (tmp_path / name).write_text('<script>eval(location.hash)</script>', encoding="utf-8")
+    result = Scanner().scan(str(tmp_path))
+    assert result.files_scanned == 0
+    assert sc.summary(result)[0] is None
+    for fmt in ("terminal", "json", "markdown", "html"):
+        output = get_reporter(fmt).render(result)
+        assert "미검사" in output
+        assert "100/100" not in output
+        assert "안전합니다" not in output
+    sarif = json.loads(get_reporter("sarif").render(result))
+    assert sarif["runs"][0]["invocations"][0]["executionSuccessful"] is False
+    payload = build_scan_payload(str(tmp_path), no_deps=True)
+    assert payload["score"] is None
+    assert payload["grade"] == "미검사"
+
+
+@pytest.mark.parametrize("problem", ["oversized", "long-line", "invalid-utf8", "unreadable", "no-rules"])
+def test_incomplete_scan_preserves_findings_and_withholds_score(tmp_path, problem):
+    path = tmp_path / "partial.py"
+    path.write_text("eval(value)\n", encoding="utf-8")
+    if problem == "oversized":
+        path.write_bytes(b" " * (MAX_FILE_BYTES + 1))
+    elif problem == "long-line":
+        path.write_text("eval(value)\n" + "x" * (MAX_LINE_LEN + 1), encoding="utf-8")
+    elif problem == "invalid-utf8":
+        path.write_bytes(b"\xff")
+    (tmp_path / "clean.py").write_text("value = 1\n", encoding="utf-8")
+    scanner = Scanner(rules=[] if problem == "no-rules" else None)
+    if problem == "unreadable":
+        real_open = open
+        def guarded_open(file, *args, **kwargs):
+            if str(file) == str(path):
+                raise PermissionError("denied")
+            return real_open(file, *args, **kwargs)
+        with patch("builtins.open", guarded_open):
+            result = scanner.scan(str(tmp_path))
+    else:
+        result = scanner.scan(str(tmp_path))
+    assert result.files_skipped >= 1
+    assert result.warnings
+    assert sc.summary(result)[0] is None
+    if problem == "long-line":
+        assert any(f.rule_id == "VG-EXEC-001" for f in result.findings)
+    assert "불완전" in sc.summary(result)[1] if result.files_scanned else sc.summary(result)[1] == "미검사"
+
+
+def test_clean_supported_scan_keeps_numeric_score(tmp_path):
+    (tmp_path / "clean.py").write_text("value = 1\n", encoding="utf-8")
+    assert sc.summary(Scanner().scan(str(tmp_path)))[:2] == (100, "A")
+
+
+def test_traversal_error_is_reported(tmp_path):
+    with patch("vibeguard.scanner.os.walk", side_effect=PermissionError("denied")):
+        result = Scanner().scan(str(tmp_path))
+    assert result.files_skipped == 1
+    assert result.warnings
+    assert sc.summary(result)[0] is None
+
+
+def test_unreadable_subtree_does_not_hide_readable_findings(tmp_path):
+    (tmp_path / "app.py").write_text("eval(value)\n", encoding="utf-8")
+    def walk(root, onerror):
+        yield root, [], ["app.py"]
+        onerror(PermissionError(13, "denied", str(tmp_path / "private")))
+    with patch("vibeguard.scanner.os.walk", walk):
+        result = Scanner().scan(str(tmp_path))
+    assert result.files_scanned == result.files_skipped == 1
+    assert result.findings
+    assert sc.summary(result)[1] == "불완전"

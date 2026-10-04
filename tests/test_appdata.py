@@ -92,6 +92,14 @@ def test_load_scan_roundtrip(isolated):
     assert "scanned_at" in data
 
 
+def test_unrated_history_roundtrip(isolated):
+    payload = _payload("/unrated", score=None)
+    payload.update(grade="미검사", files_scanned=0, files_skipped=1, warnings=["읽기 실패"])
+    saved = appdata.save_scan(payload)
+    assert appdata.load_scan(saved)["warnings"] == ["읽기 실패"]
+    assert appdata.list_scans()[0]["score"] is None
+
+
 def test_clear_history(isolated):
     appdata.save_scan(_payload("/a"))
     appdata.save_scan(_payload("/b"))

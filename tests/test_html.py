@@ -41,5 +41,7 @@ def test_html_escapes_user_content():
 
 def test_html_empty_result():
     out = get_reporter("html").render(ScanResult(files_scanned=0))
-    assert "발견된 문제가 없습니다" in out
+    assert "미검사" in out
+    assert "평가할 수 없습니다" in out
+    assert "안전합니다" not in out
     assert out.strip().endswith("</html>")
