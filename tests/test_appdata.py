@@ -105,3 +105,13 @@ def test_clear_history(isolated):
     appdata.save_scan(_payload("/b"))
     assert appdata.clear_history() == 2
     assert appdata.list_scans() == []
+
+
+def test_same_instant_scans_do_not_overwrite(isolated, monkeypatch):
+    monkeypatch.setattr(appdata.time, "time", lambda: 1700000000.0)
+    first = appdata.save_scan(_payload("/first"))
+    second = appdata.save_scan(_payload("/second"))
+    assert first != second
+    assert appdata.load_scan(first)["path"] == "/first"
+    assert appdata.load_scan(second)["path"] == "/second"
+    assert {scan["path"] for scan in appdata.list_scans()} == {"/first", "/second"}

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import time
 from typing import Any, Dict, List
 
@@ -75,10 +76,13 @@ def save_scan(payload: Dict[str, Any], limit: int = 30) -> str:
     """검사 결과를 기록으로 저장하고 보관 개수를 넘으면 오래된 것부터 지운다."""
     payload = dict(payload)
     payload["scanned_at"] = time.time()
-    name = "scan-%s-%d.json" % (time.strftime("%Y%m%d-%H%M%S"), int(time.time() * 1000) % 1000)
-    out = os.path.join(history_dir(), name)
-    with open(out, "w", encoding="utf-8") as fh:
+    # Atomic creation keeps simultaneous scans from overwriting one another.
+    with tempfile.NamedTemporaryFile(
+        mode="w", prefix="scan-%s-" % time.strftime("%Y%m%d-%H%M%S"),
+        suffix=".json", dir=history_dir(), encoding="utf-8", delete=False,
+    ) as fh:
         json.dump(payload, fh, ensure_ascii=False)
+        out = fh.name
     _trim(limit)
     return out
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vibeguard"
-version = "0.2.0"
+version = "0.2.1"
 description = "바이브코딩을 위한 보안 가드레일 - AI 생성 코드의 취약점을 잡아내는 오픈소스 정적 분석 도구"
 readme = "README.md"
 requires-python = ">=3.8"
