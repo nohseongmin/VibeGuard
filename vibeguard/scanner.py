@@ -47,6 +47,7 @@ class ScanResult:
     findings: List[Finding] = field(default_factory=list)
     files_scanned: int = 0
     files_skipped: int = 0
+    warnings: List[str] = field(default_factory=list)
 
     def by_severity(self) -> dict:
         counts = {s: 0 for s in Severity}
@@ -72,11 +73,17 @@ class Scanner:
         self.rules = rules if rules is not None else all_rules()
 
     # ---- 파일 수집 --------------------------------------------------------
-    def collect_files(self, root: str) -> List[str]:
+    def collect_files(self, root: str, result: Optional[ScanResult] = None) -> List[str]:
         if os.path.isfile(root):
             return [root]
         files: List[str] = []
-        for dirpath, dirnames, filenames in os.walk(root):
+        def on_error(error):
+            if result is None:
+                raise error
+            result.files_skipped += 1
+            result.warnings.append(f"{error.filename or root}: 폴더의 파일 목록을 읽지 못했습니다. 접근 권한을 확인하세요.")
+
+        for dirpath, dirnames, filenames in os.walk(root, onerror=on_error):
             # 제외 디렉터리 가지치기
             dirnames[:] = [d for d in dirnames if d not in self.skip_dirs and not d.startswith(".")]
             for name in filenames:
@@ -88,26 +95,42 @@ class Scanner:
 
     # ---- 단일 파일 스캔 ---------------------------------------------------
     def scan_file(self, path: str) -> List[Finding]:
+        """기존 규칙 호출자는 발견 목록만 사용한다. 보고서는 scan()을 사용한다."""
+        return self._scan_file(path).findings
+
+    def _scan_file(self, path: str) -> ScanResult:
+        result = ScanResult()
+        ext = os.path.splitext(path)[1].lower()
+        if ext not in self.include_ext and not os.path.basename(path).lower().startswith(".env"):
+            result.files_skipped = 1
+            result.warnings.append(f"{path}: 지원하지 않는 파일 형식입니다.")
+            return result
         try:
             if os.path.getsize(path) > MAX_FILE_BYTES:
-                return []
-        except OSError:
-            return []
-
-        try:
-            with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+                result.files_skipped = 1
+                result.warnings.append(f"{path}: 파일 크기 제한을 넘어 검사하지 못했습니다.")
+                return result
+            with open(path, "r", encoding="utf-8") as fh:
                 text = fh.read()
         except (OSError, UnicodeError):
-            return []
+            result.files_skipped = 1
+            result.warnings.append(f"{path}: 파일을 읽지 못했습니다. 접근 권한과 UTF-8 인코딩을 확인하세요.")
+            return result
 
         # 적용 가능한 규칙만 미리 추림
         applicable = [r for r in self.rules if r.applies_to(path)]
         if not applicable:
-            return []
+            result.files_skipped = 1
+            result.warnings.append(f"{path}: 적용 가능한 검사 규칙이 없습니다.")
+            return result
 
+        result.files_scanned = 1
         findings: List[Finding] = []
         for lineno, line in enumerate(text.splitlines(), start=1):
             if len(line) > MAX_LINE_LEN:
+                if not result.files_skipped:
+                    result.files_skipped = 1
+                    result.warnings.append(f"{path}: 길이 제한을 넘는 줄은 검사하지 못했습니다.")
                 continue
             if _IGNORE_MARK in line:
                 continue
@@ -129,14 +152,22 @@ class Scanner:
                         and in_string_span(spans, f.line, f.column - 1)
                     )
                 ]
-        return findings
+        result.findings = findings
+        return result
 
     # ---- 전체 스캔 --------------------------------------------------------
     def scan(self, root: str) -> ScanResult:
         result = ScanResult()
-        for path in self.collect_files(root):
-            file_findings = self.scan_file(path)
-            if file_findings:
-                result.findings.extend(file_findings)
-            result.files_scanned += 1
+        try:
+            paths = self.collect_files(root, result)
+        except OSError:
+            result.files_skipped = 1
+            result.warnings.append("폴더의 파일 목록을 읽지 못했습니다. 접근 권한을 확인하세요.")
+            return result
+        for path in paths:
+            file_result = self._scan_file(path)
+            result.findings.extend(file_result.findings)
+            result.files_scanned += file_result.files_scanned
+            result.files_skipped += file_result.files_skipped
+            result.warnings.extend(file_result.warnings)
         return result

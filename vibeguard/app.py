@@ -311,15 +311,15 @@ class VibeGuardApp:
         row = tk.Frame(top, bg=SURF)
         row.pack(fill="x", padx=20, pady=16)
 
-        score = int(payload.get("score", 0))
+        score = payload.get("score")
         color = self._grade_color(score)
         ring = tk.Canvas(row, width=112, height=112, bg=SURF, highlightthickness=0)
         ring.pack(side="left")
         ring.create_oval(8, 8, 104, 104, outline=SURF2, width=10)
-        if score > 0:
+        if score is not None and score > 0:
             ring.create_arc(8, 8, 104, 104, start=90, extent=-359.9 * score / 100,
                             style="arc", outline=color, width=10)
-        ring.create_text(56, 50, text=str(score), fill=TEXT, font=F(26, True))
+        ring.create_text(56, 50, text=str(score) if score is not None else "—", fill=TEXT, font=F(26, True))
         ring.create_text(56, 72, text="/ 100", fill=MUTED, font=F(8))
 
         info = tk.Frame(row, bg=SURF)
@@ -363,15 +363,17 @@ class VibeGuardApp:
         list_frame.pack(fill="both", expand=True)
         inner = self._scrollable(list_frame)
 
-        if not payload.get("files_scanned"):
-            tk.Label(inner, text="검사할 코드 파일을 찾지 못했습니다.\n"
-                                 "이 폴더에 소스코드가 있는지 확인해 주세요.",
+        if score is None:
+            tk.Label(inner, text=payload.get("verdict", "검사 범위를 확인하세요."),
                      bg=SURF, fg=SEV_COLOR["MEDIUM"], font=F(13, True), pady=28,
                      justify="center").pack(fill="x")
-            return
+        for warning in payload.get("warnings", []):
+            tk.Label(inner, text=warning, bg=BG, fg=MUTED, font=F(9),
+                     wraplength=720, justify="left").pack(fill="x", pady=4)
         if not findings:
-            tk.Label(inner, text="문제를 발견하지 못했습니다. 안전합니다!",
-                     bg=SURF, fg=GREEN, font=F(13, True), pady=28).pack(fill="x")
+            if score is not None:
+                tk.Label(inner, text="검사 범위에서 발견된 항목이 없습니다.",
+                         bg=SURF, fg=GREEN, font=F(13, True), pady=28).pack(fill="x")
             return
         if hidden:
             tk.Label(inner, text="설정한 최소 심각도(%s)보다 낮은 %d건은 숨겼습니다."
@@ -452,7 +454,7 @@ class VibeGuardApp:
             self._history_row(inner, item)
 
     def _history_row(self, parent, item: Dict[str, Any]):
-        color = self._grade_color(int(item.get("score", 0)))
+        color = self._grade_color(item.get("score"))
         row = tk.Frame(parent, bg=SURF, highlightbackground=LINE,
                        highlightthickness=1, cursor="hand2")
         row.pack(fill="x", pady=4)
@@ -469,7 +471,7 @@ class VibeGuardApp:
 
         right = tk.Frame(box, bg=SURF, cursor="hand2")
         right.pack(side="right")
-        tk.Label(right, text="%d점 · %s" % (item.get("score", 0), item.get("grade", "-")),
+        tk.Label(right, text="%s · %s" % (str(item["score"]) + "점" if item.get("score") is not None else "평가 없음", item.get("grade", "-")),
                  bg=color, fg="#0B0B0F", font=F(10, True), padx=10,
                  cursor="hand2").pack(side="right")
         tk.Label(right, text="발견 %d건" % item.get("total", 0), bg=SURF, fg=MUTED,
@@ -628,6 +630,8 @@ class VibeGuardApp:
 
     @staticmethod
     def _grade_color(score: int) -> str:
+        if score is None:
+            return MUTED
         if score >= 90:
             return GREEN
         if score >= 75:
