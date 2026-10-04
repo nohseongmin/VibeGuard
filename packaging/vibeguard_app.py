@@ -6,7 +6,7 @@
 - 앱 창에 폴더를 끌어다 놓아도 바로 검사한다.
 
 PyInstaller 로 단일 실행파일(.exe/바이너리)로 패키징한다:
-    pyinstaller --onefile --windowed --name VibeGuard packaging/vibeguard_app.py
+    pyinstaller --onefile --paths . --windowed --name VibeGuard packaging/vibeguard_app.py
 """
 
 import os
