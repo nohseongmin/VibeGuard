@@ -1,221 +1,127 @@
-<p align="center">
-  <img src="assets/icon.svg" width="96" alt="VibeGuard"/>
-</p>
+# VibeGuard
 
-<h1 align="center">VibeGuard</h1>
+A command-line security scanner for code written with AI assistants. It reports suspicious code patterns, package names that may not exist, and known dependency vulnerabilities, with explanations and suggested fixes.
 
-<p align="center">바이브코딩을 위한 보안 가드레일 · AI 생성 코드의 취약점과 환각 패키지를 잡아냅니다</p>
+VibeGuard uses the Python standard library and has no runtime package dependencies. Finding descriptions in the application are currently in Korean.
 
-<p align="center"><img src="assets/intro.svg" width="660" alt="VibeGuard 데모 — 스캔, 탐지, 보안 점수"></p>
+![Demo](assets/intro.svg)
 
-![CI](https://github.com/nohseongmin/VibeGuard/actions/workflows/vibeguard.yml/badge.svg)
-![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
-![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)
-![runtime deps: 0](https://img.shields.io/badge/runtime%20deps-0-brightgreen.svg)
-![tests: 123 passing](https://img.shields.io/badge/tests-123%20passing-brightgreen.svg)
+## Features
 
-바이브코딩(vibe coding)을 위한 보안 가드레일.
+- Scan for exposed secrets, unsafe execution, injection, insecure web settings, and weak cryptography.
+- Check imports and dependencies against PyPI and npm, and flag names similar to popular packages.
+- Query [OSV](https://osv.dev) for vulnerabilities and fixed versions, using lockfiles when available.
+- Produce terminal, JSON, Markdown, SARIF, and standalone HTML reports.
+- Use a desktop app or a local browser interface.
+- Configure excluded paths, disabled rules, severity thresholds, and accepted findings.
+- Install pre-commit hooks and use scanning in an AI agent's editing workflow.
 
-AI 코딩 어시스턴트(Cursor, Claude Code, GitHub Copilot, v0, Bolt, Lovable 등)가 생성한 코드를 사람이 깊게 검토하지 않고 그대로 배포하는 흐름을 "바이브코딩"이라고 부릅니다. 빠르지만, 보안 결함이 그대로 섞여 들어갑니다. VibeGuard는 그 코드를 정적 분석으로 점검하고, 비보안 전문가도 이해할 수 있는 언어로 "무엇이, 왜 위험하고, 어떻게 고치는지"를 알려주는 오픈소스 명령행 도구입니다.
+A score describes the scanned scope; it does not certify the whole application. Scans with no supported files are marked unscanned. Incomplete reads are marked incomplete. Neither receives a score. HTML-only folders are currently unscanned.
 
-런타임 의존성이 없습니다(파이썬 표준 라이브러리만 사용). 보안 도구 스스로가 공급망 위험을 만들지 않도록 한 설계입니다.
+## Desktop app
 
-## 왜 필요한가
+Download the appropriate executable from [Releases](https://github.com/nohseongmin/VibeGuard/releases) and open it. For Windows, use `VibeGuard-windows.exe`. Python is not needed.
 
-AI가 생성한 코드의 보안 문제는 일화가 아니라 측정된 현상입니다.
+Drag a folder into the window or choose one to scan. The app also provides saved scan history and settings for live lookups, minimum severity, excluded folders, and history retention.
 
-- AI 생성 코드의 약 45%가 보안 취약점을 포함한다는 분석이 있습니다(Veracode, 2025).
-- "바이브" 방식으로 다섯 번 다듬으면 초기 버전보다 치명적 취약점이 약 37% 더 늘어난다는 보고가 있습니다.
-- AI가 만든 코드의 약 20%가 실제로 존재하지 않는 패키지를 참조하며, 공격자가 그 이름을 미리 선점해 악성코드를 심는 "슬롭스쿼팅(slopsquatting)" 공격으로 이어집니다.
+![Desktop app](assets/app-home.png)
 
-바이브코더는 대체로 보안 전문가가 아닙니다. 따라서 도구는 빠르고, 흐름을 끊지 않고, 평이한 말로 설명해야 합니다. VibeGuard는 그 지점을 노립니다.
+Settings and history are stored in the user profile, under `%APPDATA%\VibeGuard` on Windows. Dropping a folder onto the executable opens and scans that folder.
 
-## 주요 기능
+Releases are published after tests, self-scanning, version checks, and builds for three operating systems pass. Compare the download's SHA256 with `SHA256SUMS.txt`. Local build dependencies are pinned in `requirements-build.txt`.
 
-- 정적 분석으로 AI 코드 특유의 취약 패턴 탐지(시크릿, 위험한 실행, 인젝션, 웹 설정 결함, 약한 암호화).
-- 슬롭스쿼팅/오타스쿼팅 탐지: import·의존성을 실제 레지스트리(PyPI/npm)와 대조하고, 유명 패키지와 철자가 비슷한 가짜 후보를 찾아냅니다.
-- 알려진 취약점(CVE) 검사: `requirements.txt`/`package.json`은 물론 락파일(`package-lock.json`/`Pipfile.lock`/`poetry.lock`)의 의존성을 [OSV.dev](https://osv.dev)(구글의 오픈소스 취약점 DB)에 실시간 조회해, 그 버전에 알려진 CVE와 "몇 버전 이상으로 올리면 되는지"를 알려줍니다. OSV가 DB를 계속 갱신하므로 도구를 업데이트하지 않아도 항상 최신 CVE가 반영됩니다(호출은 표준 라이브러리, 추가 의존성 0).
-- 비전문가용 설명: 각 발견 항목마다 "설명(왜 위험한가)"과 "해결(어떻게 고치는가)"을 한국어로 제공합니다.
-- 바이브 보안 점수(0~100)와 A~F 등급으로 한눈에 상태를 보여줍니다.
-- 지원 파일을 하나도 검사하지 못하면 **미검사**, 파일이나 폴더를 끝까지 읽지 못하면 **불완전**으로 표시하며 점수를 부여하지 않습니다. HTML은 현재 검사 대상이 아니므로 HTML만 있는 폴더도 미검사입니다. 정상 점수는 검사 범위의 결과이며 전체 보안을 보증하지 않습니다.
-- 바이브코딩 루프에 자동 결합: git pre-commit 훅, Claude Code 등 AI 에이전트용 PostToolUse 훅 설치를 지원합니다.
-- 데스크톱 앱(`vibeguard app`, 실행파일 더블클릭): 표준 라이브러리 tkinter 로 만든 네이티브 창. 폴더 드래그앤드롭 → 즉시 검사 → 창 안에서 결과 확인, 이전 검사 결과 다시 보기, 설정.
-- 출력 형식: 터미널, JSON, Markdown, SARIF(GitHub 코드 스캐닝/VS Code), 단독 HTML 리포트. 브라우저 GUI(`vibeguard gui`), 베이스라인(기존 코드 수용 후 새 문제만 보고), 설정 파일(`.vibeguard.json`: 규칙 비활성화·경로 제외)도 지원합니다.
+## Installation
 
-## 비개발자용 빠른 시작 (터미널 없이)
-
-코딩을 몰라도 됩니다. [Releases](https://github.com/nohseongmin/VibeGuard/releases)에서 운영체제에 맞는 실행파일을 내려받아 **더블클릭**하면 앱 창이 열립니다(예: Windows `VibeGuard-windows.exe`). Python도, 터미널도, 브라우저도 필요 없습니다.
-
-앱에는 버튼이 셋뿐입니다.
-
-| 버튼 | 하는 일 |
-|---|---|
-| 검사 실행 | 검사할 폴더를 창에 **끌어다 놓으면** 즉시 검사하고, 결과를 같은 창 안에 보여줍니다(폴더 선택 버튼도 있습니다). |
-| 이전 검사 결과 | 지난 검사들을 **최신순**으로 보여주고, 클릭하면 그때 결과를 그대로 다시 엽니다. |
-| 설정 | 실시간 조회(가짜 패키지·CVE) 사용 여부, 표시할 최소 심각도, 제외할 폴더, 기록 보관 개수를 바꿉니다. |
-
-<p align="center"><img src="assets/app-home.png" alt="VibeGuard 앱 홈 화면" width="620"></p>
-
-실행파일 아이콘 위로 폴더를 끌어다 놓으면 앱이 열리면서 그 폴더를 바로 검사합니다. 검사 기록과 설정은 사용자 폴더(Windows는 `%APPDATA%\VibeGuard`)에 저장됩니다.
-
-Python이 있다면 `python -m vibeguard app` 으로 같은 창을 띄울 수 있습니다. (실행파일은 관리자가 `v*` 태그를 푸시하면 자동으로 빌드되어 Releases에 올라갑니다.)
-
-릴리스는 테스트·자체 코드 검사·태그/앱 버전 일치 검사와 세 운영체제의 빌드가 모두
-통과한 뒤 게시됩니다. 다운로드한 파일의 SHA256은 릴리스의 `SHA256SUMS.txt`로 확인할 수 있습니다.
-로컬 빌드 의존성은 `requirements-build.txt`에 고정되어 있습니다.
-
-## 설치 (개발자/CLI)
-
-```
+```bash
 git clone https://github.com/nohseongmin/VibeGuard
 cd VibeGuard
 pip install -e .
 ```
 
-또는 설치 없이 바로 실행할 수 있습니다.
+From the source directory, scanning also works without installation:
 
-```
+```bash
 python -m vibeguard scan .
 ```
 
-### Docker로 실행 (파이썬 설치 불필요)
+With Docker:
 
 ```bash
 docker build -t vibeguard .
 docker run --rm -v "${PWD}:/scan:ro" vibeguard scan .
 ```
 
-스캔 대상 폴더를 `/scan`에 읽기 전용(`:ro`)으로 마운트하므로 검사 대상 코드를 건드리지 않습니다.
+The target is mounted read-only.
 
-## 사용법
+## Commands
 
-```
-vibeguard scan .                  현재 폴더 스캔
-vibeguard scan app.py             단일 파일 스캔
-vibeguard scan . --format json    JSON 출력(CI/에디터 연동)
-vibeguard scan . --format md -o report.md   Markdown 리포트 저장
-vibeguard scan . --offline        레지스트리 조회 없이(오프라인) 스캔
-vibeguard scan . --fail-on high   high 이상 발견 시 종료코드 1 (CI/훅용)
-vibeguard scan . --format sarif -o out.sarif   SARIF 출력(GitHub 코드 스캐닝/VS Code)
-vibeguard scan . --format html -o report.html   단독 HTML 리포트(브라우저로 열기/첨부)
-vibeguard scan . --write-baseline .vibeguard.json   현재 발견을 베이스라인으로 저장(기존 코드 수용)
-vibeguard scan . --baseline .vibeguard.json   기존 발견은 숨기고 새로 생긴 문제만 보고
-vibeguard scan . --diff           git 변경 파일만 스캔(PR/CI에서 빠르게)
-vibeguard rules                   탑재된 규칙 목록 보기
-vibeguard init-hooks              git pre-commit 훅 설치
-vibeguard app                     데스크톱 앱 실행(네이티브 창)
-vibeguard gui                     브라우저 기반 GUI 실행(로컬 서버)
-```
-
-## 앱 화면
-
-터미널이 익숙하지 않아도 쓸 수 있도록 두 가지 화면을 제공합니다. 둘 다 표준 라이브러리만으로 동작합니다.
-
-- `vibeguard app` — 네이티브 창(tkinter). 실행파일을 더블클릭했을 때 열리는 화면이며, 폴더를 창에 끌어다 놓으면 바로 검사합니다.
-- `vibeguard gui` — 로컬 웹 GUI(http.server). 브라우저로 보고 싶거나 원격 접속이 필요할 때 씁니다.
-- Python 은 있는데 명령어를 치기 싫다면 `VibeGuard-GUI.bat`(Windows) / `VibeGuard-GUI.command`(macOS) 를 더블클릭해도 웹 GUI 가 열립니다.
-
-```
-vibeguard app            # 데스크톱 앱 창 열기(폴더를 창에 끌어다 놓으면 검사)
-vibeguard gui            # http://127.0.0.1:8000 에서 GUI 실행(브라우저 자동 열림)
+```bash
+vibeguard scan .
+vibeguard scan app.py
+vibeguard scan . --format json
+vibeguard scan . --format md -o report.md
+vibeguard scan . --offline
+vibeguard scan . --fail-on high
+vibeguard scan . --format sarif -o out.sarif
+vibeguard scan . --format html -o report.html
+vibeguard scan . --write-baseline .vibeguard.json
+vibeguard scan . --baseline .vibeguard.json
+vibeguard scan . --diff
+vibeguard rules
+vibeguard init-hooks
+vibeguard app
+vibeguard gui
 vibeguard gui --port 8080
 ```
 
-경로를 입력하고 스캔하면 보안 점수 링, 심각도별 칩 필터, 취약점 카드(위치·코드·설명·해결책·CWE), 슬롭스쿼팅 강조 태그를 한눈에 볼 수 있습니다. 로컬호스트(127.0.0.1)에만 바인딩하며 외부 의존성은 없습니다.
+`--offline` skips registry and OSV calls. `--fail-on high` exits with code 1 when high-or-higher findings are present. A baseline hides accepted findings, and `--diff` scans files changed in Git.
 
-## CI 연동 (GitHub Actions)
+The desktop interface uses tkinter. The browser interface uses `http.server`, binds to `127.0.0.1`, and opens at port 8000 by default. `VibeGuard-GUI.bat` on Windows and `VibeGuard-GUI.command` on macOS also launch it.
 
-`vibeguard scan . --format sarif` 로 SARIF 2.1.0 리포트를 만들면 GitHub 코드 스캐닝(Security 탭)이나 VS Code SARIF Viewer에서 결과를 확인할 수 있습니다. 저장소의 [.github/workflows/vibeguard.yml](.github/workflows/vibeguard.yml) 이 예시 워크플로입니다 — 푸시/PR마다 스캔해 SARIF를 업로드하고, 제품 코드에서 medium 이상이 나오면 빌드를 실패시킵니다.
+## Detection scope
 
-참고: VibeGuard는 자기 자신의 코드(`vibeguard/`)를 스캔해도 발견 0건입니다(규칙 정의 라인은 `# vibeguard: ignore` 로 표시).
+| Category | Rules | Examples |
+|---|---|---|
+| Secrets | VG-SECRET-001–012 | Provider keys, private keys, plain-text passwords, credentials in database URLs |
+| Execution | VG-EXEC-001–008 | eval, exec, shell commands, pickle, unsafe YAML loading, zip-slip |
+| Injection | VG-SQLI-001–004, VG-SSTI-001 | String-built SQL, MongoDB $where, Flask template injection |
+| Web settings | VG-WEB-001–011 | Debug mode, unrestricted CORS, disabled TLS verification, public binding, innerHTML, open redirects |
+| Cryptography | VG-CRYPTO-001–006 | MD5/SHA1, non-cryptographic tokens, DES/ECB, disabled JWT verification |
+| Go | VG-GO-001–003 | InsecureSkipVerify, formatted shell commands and SQL |
+| PHP | VG-PHP-001–003 | eval, variable shell commands, request values in SQL |
+| Ruby | VG-RB-001–003 | eval, interpolated shell commands, Marshal deserialization |
+| Java | VG-JV-001–003 | Concatenated execution and SQL, MD5/SHA-1 |
+| Supply chain | VG-SLOP-001–002 | Missing packages and possible typosquatting |
 
-## 예시 출력
+Supported code files include Python, JavaScript, TypeScript, Go, PHP, Ruby, and Java. Secret rules apply across text files.
 
-데모 앱(`examples/vibe_coded_app`)을 스캔하면 다음과 같은 결과가 나옵니다(요약).
+Package checks gather imports and dependencies, verify registry entries, and flag edit-distance matches to popular packages. A suspicious name is a review candidate, not proof of malicious intent.
 
-```
-  VibeGuard   바이브코딩 보안 점검 결과
+OSV checks use pinned versions from `requirements.txt` and `package.json`, recognizing extras such as `uvicorn[standard]`. In a directory with a supported lockfile, `package-lock.json`, `Pipfile.lock`, or `poetry.lock` takes precedence. Results depend on the current OSV database and network availability.
 
- 치명적  OpenAI API 키가 코드에 하드코딩됨  [VG-SECRET-001]
-   위치: examples/vibe_coded_app/app.py:25 (col 18)
-   코드: OPENAI_API_KEY = "sk-...redacted..."
-   설명: OpenAI 형식의 비밀 API 키가 소스코드에 직접 들어 있습니다. 저장소가 공개되면 즉시 도용됩니다.
-   해결: 코드에서 값을 제거하고 환경변수(.env)나 비밀관리 서비스로 옮기세요...
-   참고: CWE-798
+## Configuration and false positives
 
- 치명적  f-string 으로 SQL 쿼리를 조립  [VG-SQLI-001]
-   ...
+Python AST inspection filters patterns inside string examples, except rules that inspect strings themselves, such as secrets and JWT settings. Placeholder values such as `your-api-key`, `example`, and `xxxx` are excluded from secret checks.
 
-  요약
-   치명적 3  높음 6  중간 2  낮음 1
-   스캔한 파일: 2개, 발견: 12건
-   보안 점수: 0/100 (등급 F)  [--------------------]
-   치명적 문제가 있습니다. 배포 전에 반드시 고치세요.
-```
+Add `# vibeguard: ignore` to suppress a specific line. Generated folders such as `node_modules`, `.venv`, and `dist` are excluded. Use `.vibeguard.json` for `disable`, `exclude`, `min_severity`, and `fail_on` settings.
 
-## 탐지 범위
+## Hooks and CI
 
-| 분류 | 대표 규칙 | 예시 |
-| --- | --- | --- |
-| 시크릿(secrets) | VG-SECRET-001~012 | OpenAI/Anthropic/AWS/GitHub/Google/Stripe/Slack/SendGrid/Twilio 키, 개인키, 평문 비밀번호, DB URL 내 비밀번호 |
-| 위험한 실행(dangerous) | VG-EXEC-001~008 | eval/exec, shell=True, os.system 포매팅, pickle, yaml.load, new Function, child_process, 압축 해제 zip-slip |
-| 인젝션(injection) | VG-SQLI-001~004, VG-SSTI-001 | f-string/템플릿/문자열결합 SQL, MongoDB $where, Flask 템플릿 인젝션(SSTI) |
-| 웹 설정(web) | VG-WEB-001~011 | debug=True/Django DEBUG, 전체 허용 CORS, TLS/SSL 검증 비활성화, 0.0.0.0 바인딩, innerHTML, 오픈 리다이렉트 |
-| 약한 암호화(crypto) | VG-CRYPTO-001~006 | MD5/SHA1, random 토큰, Math.random, DES/ECB, JWT 서명검증 비활성화/none |
-| Go | VG-GO-001~003 | InsecureSkipVerify(TLS), exec.Command+Sprintf, SQL+Sprintf |
-| PHP | VG-PHP-001~003 | eval, 셸 명령 함수+변수, $_GET/$_POST 직접 쿼리 |
-| Ruby | VG-RB-001~003 | eval, 셸 명령+문자열 보간, Marshal 역직렬화 |
-| Java | VG-JV-001~003 | Runtime.exec+결합, SQL 문자열 결합, MD5/SHA-1 |
-| 공급망(supply-chain) | VG-SLOP-001~002 | 레지스트리에 없는 환각 패키지, 유명 패키지 오타스쿼팅 |
+`vibeguard init-hooks` installs a pre-commit scan that blocks commits with high-or-higher findings. It also prints integration settings for AI agents to scan after file edits.
 
-지원 언어: Python, JavaScript/TypeScript(.js/.jsx/.ts/.tsx), Go(.go), PHP(.php), Ruby(.rb), Java(.java). 시크릿 규칙은 모든 텍스트 파일에 적용됩니다.
+SARIF 2.1.0 output works with GitHub code scanning and the VS Code SARIF Viewer. [.github/workflows/vibeguard.yml](.github/workflows/vibeguard.yml) uploads reports on pushes and pull requests and fails on medium-or-higher product-code findings.
 
-## 슬롭스쿼팅이란
+The deliberately vulnerable [example app](examples/README.md) demonstrates the rules. Its recorded scan found twelve issues across two files: three critical, six high, two medium, and one low, scoring 0/100.
 
-AI는 그럴듯하지만 존재하지 않는 패키지 이름을 만들어냅니다(예: `flask-easy-auth`). 공격자는 이런 이름을 미리 레지스트리에 올려 두고, 개발자가 의심 없이 `pip install` 하기를 기다립니다. VibeGuard는 코드의 import와 requirements.txt/package.json의 의존성을 모아 실제 레지스트리에 존재하는지 확인하고, 유명 패키지와 편집거리 1~2인 오타 후보도 함께 경고합니다. 네트워크가 없으면 `--offline`으로 오타 휴리스틱만 수행합니다.
+## Development
 
-## 알려진 취약점(CVE) 검사
-
-코드 패턴 규칙이 "어떻게 짜면 위험한가"를 본다면, 이 검사는 "무엇을 쓰면 위험한가"를 봅니다. 완벽하게 짠 코드라도 오래된 라이브러리를 쓰면 그 라이브러리의 알려진 결함을 그대로 물려받습니다.
-
-VibeGuard는 `requirements.txt`/`package.json`에 고정된 버전을 [OSV.dev](https://osv.dev)에 조회해, 그 버전에 공개된 취약점(CVE/GHSA)과 수정 버전을 보고합니다. 예를 들어 `requests==2.5.0`은 CVE-2018-18074(인증정보 유출) 등 여러 건이 잡히고 "2.20.0 이상으로 올리세요"까지 안내합니다. `uvicorn[standard]==0.23.0` 같은 extras 표기도 인식합니다.
-
-락파일이 있으면 우선합니다: `package.json`의 `^4.17.1`은 범위 추정이지만, `package-lock.json`/`Pipfile.lock`/`poetry.lock`에는 실제 설치된 정확한 버전이 있기 때문입니다. 같은 폴더에 락파일이 있으면 선언 파일 대신 락파일을 읽습니다.
-
-핵심은 **자동 최신화**입니다. 취약점 목록을 도구 안에 넣어 두지 않고 OSV에 실시간으로 물어보므로, 어제 새로 공개된 CVE도 도구를 업데이트하지 않고 바로 반영됩니다. 조회는 파이썬 표준 라이브러리(`urllib`)로만 하므로 추가 의존성은 없습니다. `--offline`이면 이 검사는 건너뜁니다.
-
-## 오탐 줄이기
-
-- Python 파일은 AST로 문자열 리터럴 위치를 분석해, 문자열·문서·예시 안의 코드 패턴(예: 설명 속 `eval(`, `md5(`)을 가짜 양성으로 잡지 않습니다. (시크릿·IP·JWT 설정처럼 문자열 자체가 대상인 규칙은 그대로 탐지)
-- 특정 줄을 무시하려면 줄 끝에 주석을 답니다: `eval(x)  # vibeguard: ignore`
-- `your-api-key`, `example`, `xxxx` 같은 placeholder 값은 시크릿 규칙에서 자동 제외됩니다.
-- `node_modules`, `.venv`, `dist` 등 산출물 디렉터리는 스캔에서 제외됩니다.
-- `.vibeguard.json` 설정 파일로 규칙 비활성화(`disable`)·경로 제외(`exclude`)·기본 심각도(`min_severity`)/실패 임계값(`fail_on`)을 지정할 수 있습니다.
-
-## 바이브코딩 루프에 결합
-
-git pre-commit 훅:
-
-```
-vibeguard init-hooks
-```
-
-커밋 직전 자동으로 스캔하고 high 이상이면 커밋을 막습니다(우회: `git commit --no-verify`).
-
-Claude Code 등 AI 에이전트와 결합하면, AI가 파일을 수정한 직후 자동으로 점검되어 에이전트가 결과를 보고 스스로 교정할 수 있습니다(`vibeguard init-hooks` 실행 시 설정 예시를 출력).
-
-## 개발/테스트
-
-```
+```bash
 pip install -e ".[dev]"
 pytest
 ```
 
-## 한계와 다음 단계
+Analysis mainly uses line-based patterns and heuristics; full taint analysis is not included. Planned work includes broader AST analysis, more languages, suggested automatic fixes, a VS Code extension, and rule plugins.
 
-- 현재는 정규식·휴리스틱 기반의 라인 단위 분석입니다. 데이터 흐름 분석(taint analysis)은 포함하지 않습니다.
-- 로드맵: AST 기반 분석으로 오탐 감소, 더 많은 언어, 자동 수정(quick-fix), VS Code 확장, 규칙 플러그인 API.
+## License
 
-## 라이선스
-
-MIT License. 자세한 내용은 [LICENSE](LICENSE)를 참고하세요.
+[MIT](LICENSE).
