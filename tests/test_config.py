@@ -63,3 +63,11 @@ def test_invalid_list_config_falls_back_to_defaults(tmp_path, capsys):
     code, data = _scan_json(tmp_path, capsys)
     assert code == 0
     assert any(f["rule_id"] == "VG-WEB-009" for f in data["findings"])
+
+
+def test_null_list_config_preserves_valid_settings(tmp_path, capsys):
+    _write(tmp_path, "v.py", "ctx = ssl._create_unverified_context()\n")
+    _write(tmp_path, ".vibeguard.json", '{"disable": null, "exclude": null, "fail_on": "high"}')
+    code, data = _scan_json(tmp_path, capsys)
+    assert code == 1
+    assert any(f["rule_id"] == "VG-WEB-009" for f in data["findings"])

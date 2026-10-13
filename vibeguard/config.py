@@ -58,7 +58,7 @@ def load_config(path: str) -> dict:
             data.pop(key)
     for key in ("exclude", "disable"):
         value = data.get(key)
-        if value is not None and (
+        if key in data and (
             not isinstance(value, list) or not all(isinstance(item, str) for item in value)
         ):
             data.pop(key)
