@@ -4,6 +4,8 @@ OSV 호출부(_post_json/_get_json)를 monkeypatch 로 가짜 응답으로 대�
 파서·심각도 매핑·Finding 생성 로직만 검증한다.
 """
 
+import pytest
+
 from vibeguard import cve
 from vibeguard.finding import Severity
 
@@ -86,6 +88,20 @@ def test_lockfile_wins_over_package_json(tmp_path):
     targets = cve._collect_manifests(str(tmp_path))
     vers = [t[2] for t in targets if t[1] == "express"]
     assert vers == ["4.17.1"]            # ^4.0.0(추정)이 아니라 설치본 4.17.1 하나만
+
+
+@pytest.mark.parametrize("lock_name, lock_text", [
+    ("Pipfile.lock", '{"default": {"flask": {"version": "==3.0.0"}}}'),
+    ("poetry.lock", '[[package]]\nname = "flask"\nversion = "3.0.0"\n'),
+])
+def test_python_lockfile_wins_over_requirements(tmp_path, lock_name, lock_text):
+    (tmp_path / "requirements.txt").write_text("flask==2.0.1\n", encoding="utf-8")
+    (tmp_path / "requirements-dev.txt").write_text("flask==2.1.0\n", encoding="utf-8")
+    (tmp_path / lock_name).write_text(lock_text, encoding="utf-8")
+
+    targets = cve._collect_manifests(str(tmp_path))
+
+    assert targets == [("PyPI", "flask", "3.0.0", lock_name, 1)]
 
 
 def test_collect_dedupes_same_target(tmp_path):

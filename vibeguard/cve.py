@@ -211,7 +211,7 @@ def _cve_alias(vuln: dict) -> str:
 def _collect_manifests(root: str) -> List[Target]:
     """(ecosystem, name, version, 상대파일, 라인) 목록을 모은다.
 
-    같은 디렉터리에 락파일이 있으면 선언 파일(package.json)은 건너뛴다 —
+    같은 디렉터리에 락파일이 있으면 해당 선언 파일(package.json/requirements)은 건너뛴다 —
     락파일의 버전이 실제 설치본이기 때문이다. 전체 결과는 (생태계, 이름, 버전)
     기준으로 중복 제거된다.
     """
@@ -227,11 +227,12 @@ def _collect_manifests(root: str) -> List[Target]:
     def handle_dir(dp: str, fns: List[str], rel_of) -> None:
         low = {f.lower(): f for f in fns}
         has_npm_lock = "package-lock.json" in low
+        has_py_lock = "pipfile.lock" in low or "poetry.lock" in low
 
         for fn in fns:
             base = fn.lower()
             fp = os.path.join(dp, fn)
-            if base.startswith("requirements") and base.endswith(".txt"):
+            if base.startswith("requirements") and base.endswith(".txt") and not has_py_lock:
                 text = read(fp)
                 if text is None:
                     continue
