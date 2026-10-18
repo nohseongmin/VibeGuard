@@ -21,6 +21,21 @@ def test_real_call_still_flagged(tmp_path):
     assert "VG-EXEC-001" in _ids(tmp_path, code)
 
 
+def test_code_pattern_inside_string_after_unicode_is_suppressed(tmp_path):
+    code = '설명 = "eval(value)"\n'
+    assert "VG-EXEC-001" not in _ids(tmp_path, code)
+
+
+def test_real_call_after_unicode_string_still_flagged(tmp_path):
+    code = 'message = "한글"; ev' + "al(user_input)\n"
+    assert "VG-EXEC-001" in _ids(tmp_path, code)
+
+
+def test_real_call_after_multiline_unicode_string_still_flagged(tmp_path):
+    code = 'message = """\n한글"""; ev' + "al(user_input)\n"
+    assert "VG-EXEC-001" in _ids(tmp_path, code)
+
+
 def test_weak_hash_in_docstring_suppressed(tmp_path):
     code = '"""md5(x) 는 약하다"""\nimport os\n'
     ids = _ids(tmp_path, code)

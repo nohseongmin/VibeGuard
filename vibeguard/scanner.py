@@ -126,7 +126,8 @@ class Scanner:
 
         result.files_scanned = 1
         findings: List[Finding] = []
-        for lineno, line in enumerate(text.splitlines(), start=1):
+        lines = text.splitlines()
+        for lineno, line in enumerate(lines, start=1):
             if len(line) > MAX_LINE_LEN:
                 if not result.files_skipped:
                     result.files_skipped = 1
@@ -143,13 +144,18 @@ class Scanner:
 
             spans = string_literal_spans(text)
             if spans:
+                # AST의 열은 UTF-8 바이트 단위이므로 정규식의 문자 위치를 변환한다.
                 findings = [
                     f
                     for f in findings
                     if not (
                         f.category in _CODE_CATEGORIES
                         and f.rule_id not in _STRING_OK_RULES
-                        and in_string_span(spans, f.line, f.column - 1)
+                        and in_string_span(
+                            spans,
+                            f.line,
+                            len(lines[f.line - 1][:f.column - 1].encode("utf-8")),
+                        )
                     )
                 ]
         result.findings = findings
