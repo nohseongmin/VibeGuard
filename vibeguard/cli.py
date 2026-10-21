@@ -105,6 +105,9 @@ def _run_scan(args) -> int:
             return 1
         result.findings = filter_new(result.findings, known)
 
+    # 표시 필터로 숨긴 발견도 종료 코드 판정에는 포함한다.
+    findings_for_exit = result.findings
+
     # 최소 심각도 필터 (CLI > 설정 파일)
     min_sev = args.min_severity or cfg.get("min_severity")
     if min_sev:
@@ -131,7 +134,7 @@ def _run_scan(args) -> int:
         if not result.files_scanned or result.files_skipped:
             return 2
         threshold = Severity.from_name(fail_on)
-        if any(f.severity >= threshold for f in result.findings):
+        if any(f.severity >= threshold for f in findings_for_exit):
             return 1
     return 0
 
