@@ -102,3 +102,39 @@ def test_scan_empty_baseline_succeeds(tmp_path, capsys):
     )
     assert args.func(args) == 0
     assert capsys.readouterr().err == ""
+
+
+@pytest.mark.parametrize("flags, config", [
+    (["--min-severity", "critical", "--fail-on", "high"], {}),
+    ([], {"min_severity": "critical", "fail_on": "high"}),
+])
+def test_hidden_findings_still_fail_scan(tmp_path, capsys, flags, config):
+    import json
+
+    (tmp_path / "app.py").write_text(
+        "ctx = ssl._create_unverified_context()\n", encoding="utf-8"
+    )
+    (tmp_path / ".vibeguard.json").write_text(json.dumps(config), encoding="utf-8")
+    args = build_parser().parse_args(
+        ["scan", str(tmp_path), "--no-deps", "--format", "json", *flags]
+    )
+    assert args.func(args) == 1
+    assert json.loads(capsys.readouterr().out)["findings"] == []
+
+
+def test_baseline_findings_do_not_fail_scan_with_display_filter(tmp_path, capsys):
+    (tmp_path / "app.py").write_text(
+        "ctx = ssl._create_unverified_context()\n", encoding="utf-8"
+    )
+    baseline = tmp_path / "baseline.json"
+    parser = build_parser()
+    args = parser.parse_args(
+        ["scan", str(tmp_path), "--no-deps", "--write-baseline", str(baseline)]
+    )
+    assert args.func(args) == 0
+    capsys.readouterr()
+    args = parser.parse_args(
+        ["scan", str(tmp_path), "--no-deps", "--baseline", str(baseline),
+         "--min-severity", "critical", "--fail-on", "high"]
+    )
+    assert args.func(args) == 0
