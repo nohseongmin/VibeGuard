@@ -110,7 +110,7 @@ class Scanner:
                 result.files_skipped = 1
                 result.warnings.append(f"{path}: 파일 크기 제한을 넘어 검사하지 못했습니다.")
                 return result
-            with open(path, "r", encoding="utf-8") as fh:
+            with open(path, "r", encoding="utf-8-sig") as fh:
                 text = fh.read()
         except (OSError, UnicodeError):
             result.files_skipped = 1
