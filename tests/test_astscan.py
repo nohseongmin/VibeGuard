@@ -21,6 +21,16 @@ def test_real_call_still_flagged(tmp_path):
     assert "VG-EXEC-001" in _ids(tmp_path, code)
 
 
+def test_utf8_bom_preserves_string_filter_and_real_call_detection(tmp_path):
+    p = tmp_path / "a.py"
+    code = 'doc = "use eval() with care"\nout = ev' + "al(user_input)\n"
+    p.write_text(code, encoding="utf-8-sig")
+
+    findings = Scanner().scan_file(str(p))
+
+    assert [(f.rule_id, f.line) for f in findings] == [("VG-EXEC-001", 2)]
+
+
 def test_code_pattern_inside_string_after_unicode_is_suppressed(tmp_path):
     code = '설명 = "eval(value)"\n'
     assert "VG-EXEC-001" not in _ids(tmp_path, code)
