@@ -42,6 +42,21 @@ def test_changed_files_graceful_without_repo(tmp_path):
     assert isinstance(gitdiff.changed_files(str(tmp_path)), list)
 
 
+@pytest.mark.parametrize("command", ["diff", "ls-files"])
+def test_changed_files_preserves_special_filenames(tmp_path, monkeypatch, command):
+    names = ["보안 검사.py", " leading.py", 'quoted"file.py', "tab\tfile.py", "line\nbreak.py", "line\r\nbreak.py"]
+    expected = [os.path.normpath(os.path.join(str(tmp_path), name)) for name in names]
+    output = b"\0".join(os.fsencode(name) for name in names) + b"\0"
+
+    def run(args, **kwargs):
+        assert "-z" in args
+        return subprocess.CompletedProcess(args, 0, stdout=output if command in args else b"")
+
+    monkeypatch.setattr(gitdiff.subprocess, "run", run)
+    monkeypatch.setattr(gitdiff.os.path, "isfile", lambda path: path in expected)
+    assert gitdiff.changed_files(str(tmp_path)) == expected
+
+
 @needs_git
 def test_cli_diff_scans_only_changed(tmp_path, capsys):
     root = _init_repo(tmp_path)

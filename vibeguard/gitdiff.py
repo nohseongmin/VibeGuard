@@ -16,14 +16,13 @@ def _run_git(root: str, args: List[str]) -> List[str]:
         proc = subprocess.run(
             ["git", "-C", root, *args],
             capture_output=True,
-            text=True,
             timeout=15,
         )
     except (OSError, subprocess.SubprocessError):
         return []
     if proc.returncode != 0:
         return []
-    return [ln for ln in proc.stdout.splitlines() if ln.strip()]
+    return [os.fsdecode(name) for name in proc.stdout.split(b"\0") if name]
 
 
 def changed_files(path: str, base: Optional[str] = None) -> List[str]:
@@ -33,8 +32,8 @@ def changed_files(path: str, base: Optional[str] = None) -> List[str]:
     else:
         root = os.path.dirname(os.path.abspath(path)) or "."
 
-    names = _run_git(root, ["diff", "--name-only", base or "HEAD"])
-    names += _run_git(root, ["ls-files", "--others", "--exclude-standard"])
+    names = _run_git(root, ["diff", "--name-only", "-z", base or "HEAD"])
+    names += _run_git(root, ["ls-files", "--others", "--exclude-standard", "-z"])
 
     out: List[str] = []
     seen = set()
