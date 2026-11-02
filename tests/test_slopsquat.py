@@ -3,6 +3,8 @@
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from vibeguard import slopsquat as ss  # noqa: E402
@@ -52,6 +54,20 @@ def test_parse_package_json():
     text = '{"dependencies": {"react": "^18"}, "devDependencies": {"jest": "^29"}}'
     names = ss.parse_package_json(text)
     assert {"react", "jest"} == names
+
+
+@pytest.mark.parametrize("text", ["[]", "null", "true", "1", '"package"'])
+def test_parse_package_json_non_object(text):
+    assert ss.parse_package_json(text) == set()
+
+
+def test_non_object_package_json_does_not_stop_scan(tmp_path):
+    (tmp_path / "package.json").write_text("[]", encoding="utf-8")
+    (tmp_path / "app.py").write_text("import reqeusts\n", encoding="utf-8")
+
+    findings = ss.check_project(str(tmp_path), offline=True)
+
+    assert any(f.rule_id == "VG-SLOP-002" for f in findings)
 
 
 def test_offline_typosquat_finding(tmp_path):
