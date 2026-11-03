@@ -135,6 +135,8 @@ def parse_package_json(text: str) -> Set[str]:
         data = json.loads(text)
     except (json.JSONDecodeError, ValueError):
         return names
+    if not isinstance(data, dict):
+        return names
     for key in ("dependencies", "devDependencies", "optionalDependencies"):
         deps = data.get(key)
         if isinstance(deps, dict):
