@@ -27,6 +27,17 @@ def test_parse_requirements_extras_syntax():
     assert got["celery"] == "5.2.0"
 
 
+@pytest.mark.parametrize("version", ["1.2.3+cpu", "1!2.3.4", "1!2.3.4+vendor.1"])
+def test_requirements_preserves_local_version_and_epoch(tmp_path, version):
+    text = f"# 고정 버전\nexample[extra]=={version}  # 주석\n"
+    (tmp_path / "requirements.txt").write_text(text, encoding="utf-8")
+
+    assert cve.parse_requirements(text) == [("example", version)]
+    assert cve._collect_manifests(str(tmp_path)) == [
+        ("PyPI", "example", version, "requirements.txt", 2)
+    ]
+
+
 def test_parse_package_lock_v3():
     text = """{
       "lockfileVersion": 3,
