@@ -35,7 +35,7 @@ _SKIP_DIRS = DEFAULT_SKIP_DIRS  # 스캐너와 동일한 제외 디렉터리(단
 
 # pkg==1.2.3 및 extras 표기 pkg[extra1,extra2]==1.2.3 지원
 _REQ_RE = re.compile(
-    r"^\s*([A-Za-z0-9_.\-]+)\s*(?:\[[^\]]*\])?\s*==\s*([A-Za-z0-9][A-Za-z0-9_.\-]*)"
+    r"^\s*([A-Za-z0-9_.\-]+)\s*(?:\[[^\]]*\])?\s*==\s*([A-Za-z0-9][A-Za-z0-9_.!+\-]*)"
 )
 # poetry.lock 의 [[package]] 블록에서 name/version 추출(TOML 파서 없이 — 3.8 호환)
 _POETRY_RE = re.compile(
