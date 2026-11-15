@@ -32,7 +32,7 @@ def changed_files(path: str, base: Optional[str] = None) -> List[str]:
     else:
         root = os.path.dirname(os.path.abspath(path)) or "."
 
-    names = _run_git(root, ["diff", "--name-only", "-z", base or "HEAD"])
+    names = _run_git(root, ["diff", "--name-only", "--relative", "-z", base or "HEAD"])
     names += _run_git(root, ["ls-files", "--others", "--exclude-standard", "-z"])
 
     out: List[str] = []
