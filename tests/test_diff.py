@@ -69,3 +69,27 @@ def test_cli_diff_scans_only_changed(tmp_path, capsys):
     d = json.loads(capsys.readouterr().out)
     files = {f["file"] for f in d["findings"]}
     assert any("vuln.py" in f for f in files)
+
+
+@needs_git
+@pytest.mark.parametrize("diff_args", [["--diff"], ["--diff", "HEAD~0"]])
+def test_cli_diff_scans_modified_files_in_subdirectory(tmp_path, capsys, diff_args):
+    root = _init_repo(tmp_path)
+    source = tmp_path / "src"
+    source.mkdir()
+    tracked = source / "tracked.py"
+    tracked.write_text("x = 1\n", encoding="utf-8")
+    _git(root, "add", "-A")
+    _git(root, "commit", "-qm", "init")
+    tracked.write_text("ctx = ssl._create_unverified_context()\n", encoding="utf-8")
+    (source / "new.py").write_text("y = 2\n", encoding="utf-8")
+
+    code = main([
+        "scan", str(source), "--no-deps", *diff_args,
+        "--format", "json", "--fail-on", "high",
+    ])
+    data = json.loads(capsys.readouterr().out)
+
+    assert code == 1
+    assert data["files_scanned"] == 2
+    assert {f["file"] for f in data["findings"]} == {str(tracked)}
